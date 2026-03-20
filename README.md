@@ -1,5 +1,12 @@
 # Recipe MCP Server
 
+[![CI](https://github.com/Recipe-Web-App/recipe-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Recipe-Web-App/recipe-mcp-server/actions/workflows/ci.yml)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
+[![MCP 2025-11-25](https://img.shields.io/badge/MCP-2025--11--25-green.svg)](https://modelcontextprotocol.io)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy-lang.org/)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
+
 A **production-ready Model Context Protocol (MCP) server** that provides LLM-powered clients
 with comprehensive recipe management, nutrition analysis, and meal planning capabilities.
 
