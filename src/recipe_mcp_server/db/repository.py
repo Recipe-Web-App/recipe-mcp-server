@@ -236,11 +236,7 @@ class RecipeRepo:
     ) -> PaginatedResponse[RecipeSummary]:
         async with get_session(self._factory) as session:
             # Order by id for stable, cursor-compatible pagination
-            stmt = (
-                select(RecipeTable)
-                .where(RecipeTable.is_deleted == 0)
-                .order_by(RecipeTable.id)
-            )
+            stmt = select(RecipeTable).where(RecipeTable.is_deleted == 0).order_by(RecipeTable.id)
             if cursor:
                 stmt = stmt.where(RecipeTable.id > cursor)
             stmt = stmt.limit(limit + 1)
@@ -251,9 +247,7 @@ class RecipeRepo:
                 rows = rows[:limit]
 
             count_result = await session.execute(
-                select(func.count()).select_from(RecipeTable).where(
-                    RecipeTable.is_deleted == 0
-                )
+                select(func.count()).select_from(RecipeTable).where(RecipeTable.is_deleted == 0)
             )
             total = count_result.scalar_one()
 
