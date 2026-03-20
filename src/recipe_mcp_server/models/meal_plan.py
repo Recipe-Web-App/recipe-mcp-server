@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -39,7 +40,7 @@ class MealPlan(BaseModel):
     name: str
     start_date: str
     end_date: str
-    preferences: dict | None = None  # type: ignore[type-arg]
+    preferences: dict[str, Any] | None = None
     days: list[DayPlan] = []
     created_at: datetime | None = None
 

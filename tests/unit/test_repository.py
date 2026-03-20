@@ -59,10 +59,11 @@ class TestRecipeRepo:
     async def test_update(self, recipe_repo: RecipeRepo) -> None:
         data = RecipeCreate(title="Old Title", servings=4)
         recipe = await recipe_repo.create(data)
+        assert recipe.id is not None
 
         updated = await recipe_repo.update(
             recipe.id,
-            RecipeUpdate(title="New Title", servings=6),  # type: ignore[arg-type]
+            RecipeUpdate(title="New Title", servings=6),
         )
         assert updated is not None
         assert updated.title == "New Title"
@@ -75,12 +76,13 @@ class TestRecipeRepo:
     async def test_soft_delete(self, recipe_repo: RecipeRepo) -> None:
         data = RecipeCreate(title="To Delete")
         recipe = await recipe_repo.create(data)
+        assert recipe.id is not None
 
-        deleted = await recipe_repo.delete(recipe.id)  # type: ignore[arg-type]
+        deleted = await recipe_repo.delete(recipe.id)
         assert deleted is True
 
         # Should not be found via get
-        fetched = await recipe_repo.get(recipe.id)  # type: ignore[arg-type]
+        fetched = await recipe_repo.get(recipe.id)
         assert fetched is None
 
     async def test_delete_nonexistent(self, recipe_repo: RecipeRepo) -> None:
@@ -90,7 +92,8 @@ class TestRecipeRepo:
     async def test_soft_deleted_not_in_list(self, recipe_repo: RecipeRepo) -> None:
         await recipe_repo.create(RecipeCreate(title="Keep"))
         r2 = await recipe_repo.create(RecipeCreate(title="Delete"))
-        await recipe_repo.delete(r2.id)  # type: ignore[arg-type]
+        assert r2.id is not None
+        await recipe_repo.delete(r2.id)
 
         page = await recipe_repo.list_recipes()
         titles = [item.title for item in page.items]
@@ -129,7 +132,8 @@ class TestRecipeRepo:
             tags=["tag1", "tag2"],
         )
         recipe = await recipe_repo.create(data)
-        fetched = await recipe_repo.get(recipe.id)  # type: ignore[arg-type]
+        assert recipe.id is not None
+        fetched = await recipe_repo.get(recipe.id)
 
         assert fetched is not None
         assert fetched.instructions == ["Step 1", "Step 2"]
@@ -176,8 +180,9 @@ class TestFavoriteRepo:
         self, favorite_repo: FavoriteRepo, recipe_repo: RecipeRepo
     ) -> None:
         recipe = await recipe_repo.create(RecipeCreate(title="Fav Recipe"))
+        assert recipe.id is not None
 
-        fav = await favorite_repo.save("user1", recipe.id, rating=5, notes="Great!")  # type: ignore[arg-type]
+        fav = await favorite_repo.save("user1", recipe.id, rating=5, notes="Great!")
         assert fav.user_id == "user1"
         assert fav.rating == 5
 
@@ -187,9 +192,10 @@ class TestFavoriteRepo:
 
     async def test_upsert(self, favorite_repo: FavoriteRepo, recipe_repo: RecipeRepo) -> None:
         recipe = await recipe_repo.create(RecipeCreate(title="Fav"))
+        assert recipe.id is not None
 
-        await favorite_repo.save("user1", recipe.id, rating=3)  # type: ignore[arg-type]
-        updated = await favorite_repo.save("user1", recipe.id, rating=5)  # type: ignore[arg-type]
+        await favorite_repo.save("user1", recipe.id, rating=3)
+        updated = await favorite_repo.save("user1", recipe.id, rating=5)
         assert updated.rating == 5
 
         favs = await favorite_repo.list_for_user("user1")
@@ -197,9 +203,10 @@ class TestFavoriteRepo:
 
     async def test_remove(self, favorite_repo: FavoriteRepo, recipe_repo: RecipeRepo) -> None:
         recipe = await recipe_repo.create(RecipeCreate(title="Fav"))
-        await favorite_repo.save("user1", recipe.id)  # type: ignore[arg-type]
+        assert recipe.id is not None
+        await favorite_repo.save("user1", recipe.id)
 
-        removed = await favorite_repo.remove("user1", recipe.id)  # type: ignore[arg-type]
+        removed = await favorite_repo.remove("user1", recipe.id)
         assert removed is True
 
         favs = await favorite_repo.list_for_user("user1")
@@ -241,7 +248,8 @@ class TestMealPlanRepo:
         assert len(created.days) == 1
         assert len(created.days[0].meals) == 2
 
-        fetched = await meal_plan_repo.get(created.id)  # type: ignore[arg-type]
+        assert created.id is not None
+        fetched = await meal_plan_repo.get(created.id)
         assert fetched is not None
         assert fetched.name == "Week 1"
         assert len(fetched.days) == 1

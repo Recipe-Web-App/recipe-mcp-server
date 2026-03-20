@@ -97,7 +97,7 @@ class TestRecipe:
 
     def test_recipe_invalid_difficulty(self) -> None:
         with pytest.raises(ValidationError):
-            Recipe(title="Test", difficulty="impossible")  # type: ignore[arg-type]
+            Recipe.model_validate({"title": "Test", "difficulty": "impossible"})
 
 
 class TestRecipeCreate:
@@ -170,7 +170,7 @@ class TestMealPlan:
 
     def test_meal_plan_invalid_meal_type(self) -> None:
         with pytest.raises(ValidationError):
-            MealPlanItem(day_date="2026-03-19", meal_type="brunch")  # type: ignore[arg-type]
+            MealPlanItem.model_validate({"day_date": "2026-03-19", "meal_type": "brunch"})
 
     def test_day_plan(self) -> None:
         day = DayPlan(

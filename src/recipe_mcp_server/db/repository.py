@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
@@ -35,7 +36,7 @@ from recipe_mcp_server.models import (
 from recipe_mcp_server.models.common import MealType
 
 
-def _json_dumps(value: list | dict | None) -> str | None:  # type: ignore[type-arg]
+def _json_dumps(value: list[Any] | dict[str, Any] | None) -> str | None:
     if value is None:
         return None
     return json.dumps(value)
@@ -44,7 +45,8 @@ def _json_dumps(value: list | dict | None) -> str | None:  # type: ignore[type-a
 def _json_loads_list(value: str | None) -> list[str]:
     if not value:
         return []
-    return json.loads(value)  # type: ignore[no-any-return]
+    result: list[str] = json.loads(value)
+    return result
 
 
 def _utc_now() -> str:
@@ -191,21 +193,24 @@ class RecipeRepo:
                 elif field == "difficulty":
                     setattr(row, field, value.value if value else None)
                 elif field == "ingredients":
-                    # Replace all ingredients
+                    # Replace all ingredients (None means clear)
                     row.ingredients.clear()
-                    for i, ing_data in enumerate(value):
-                        ing = (
-                            ing_data if isinstance(ing_data, Ingredient) else Ingredient(**ing_data)
-                        )
-                        row.ingredients.append(
-                            RecipeIngredientTable(
-                                name=ing.name,
-                                quantity=ing.quantity,
-                                unit=ing.unit,
-                                notes=ing.notes,
-                                order_index=i,
+                    if value is not None:
+                        for i, ing_data in enumerate(value):
+                            ing = (
+                                ing_data
+                                if isinstance(ing_data, Ingredient)
+                                else Ingredient(**ing_data)
                             )
-                        )
+                            row.ingredients.append(
+                                RecipeIngredientTable(
+                                    name=ing.name,
+                                    quantity=ing.quantity,
+                                    unit=ing.unit,
+                                    notes=ing.notes,
+                                    order_index=i,
+                                )
+                            )
                 else:
                     setattr(row, field, value)
 
@@ -230,10 +235,11 @@ class RecipeRepo:
         self, cursor: str | None = None, limit: int = 50
     ) -> PaginatedResponse[RecipeSummary]:
         async with get_session(self._factory) as session:
+            # Order by id for stable, cursor-compatible pagination
             stmt = (
                 select(RecipeTable)
                 .where(RecipeTable.is_deleted == 0)
-                .order_by(RecipeTable.created_at.desc(), RecipeTable.id)
+                .order_by(RecipeTable.id)
             )
             if cursor:
                 stmt = stmt.where(RecipeTable.id > cursor)
@@ -244,9 +250,12 @@ class RecipeRepo:
             if has_more:
                 rows = rows[:limit]
 
-            # Get total count
-            count_stmt = select(RecipeTable).where(RecipeTable.is_deleted == 0)
-            total = len((await session.execute(count_stmt)).scalars().all())
+            count_result = await session.execute(
+                select(func.count()).select_from(RecipeTable).where(
+                    RecipeTable.is_deleted == 0
+                )
+            )
+            total = count_result.scalar_one()
 
             items = [_summary_from_row(r) for r in rows]
             next_cursor = rows[-1].id if has_more else None
@@ -287,7 +296,7 @@ class UserRepo:
                 await session.flush()
             return self._to_model(row)
 
-    async def update(self, user_id: str, data: dict) -> UserPreferences | None:  # type: ignore[type-arg]
+    async def update(self, user_id: str, data: dict[str, Any]) -> UserPreferences | None:
         async with get_session(self._factory) as session:
             stmt = select(UserProfileTable).where(UserProfileTable.user_id == user_id)
             row = (await session.execute(stmt)).scalar_one_or_none()
@@ -508,8 +517,8 @@ class AuditRepo:
         action: str,
         entity_type: str,
         entity_id: str | None = None,
-        before_state: dict | None = None,  # type: ignore[type-arg]
-        after_state: dict | None = None,  # type: ignore[type-arg]
+        before_state: dict[str, Any] | None = None,
+        after_state: dict[str, Any] | None = None,
         tool_name: str | None = None,
         request_id: str | None = None,
         user_id: str | None = None,
