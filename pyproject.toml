@@ -1,9 +1,4 @@
 [project]
-name = "recipe-mcp-server"
-version = "0.1.0"
-description = "Production-ready MCP server for recipe management, nutrition analysis, and meal planning"
-requires-python = ">=3.13"
-license = "MIT"
 dependencies = [
   "fastmcp>=3.1.1",
   "sqlalchemy[asyncio]>=2.0",
@@ -20,6 +15,11 @@ dependencies = [
   "tenacity>=9.0",
   "Pillow>=11.0",
 ]
+description = "Production-ready MCP server for recipe management, nutrition analysis, and meal planning"
+license = "MIT"
+name = "recipe-mcp-server"
+requires-python = ">=3.13"
+version = "0.1.0"
 
 [project.optional-dependencies]
 dev = [
@@ -37,39 +37,39 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/recipe_mcp_server"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
   "unit: Unit tests",
   "integration: Integration tests (requires Redis)",
   "e2e: End-to-end MCP protocol tests",
 ]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
 src = ["src", "tests"]
+target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 ignore = ["UP046"]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 python_version = "3.13"
 strict = true
-plugins = ["pydantic.mypy"]
 
 [tool.coverage.run]
-source = ["src/recipe_mcp_server"]
 branch = true
+source = ["src/recipe_mcp_server"]
 
 [tool.coverage.report]
-fail_under = 85
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "if __name__"]
+fail_under = 85

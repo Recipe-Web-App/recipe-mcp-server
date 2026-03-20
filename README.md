@@ -1,23 +1,26 @@
 # Recipe MCP Server
 
-A **production-ready Model Context Protocol (MCP) server** that provides LLM-powered clients with comprehensive recipe management, nutrition analysis, and meal planning capabilities.
+A **production-ready Model Context Protocol (MCP) server** that provides LLM-powered clients
+with comprehensive recipe management, nutrition analysis, and meal planning capabilities.
 
-Built as both a **learning showcase** demonstrating every MCP capability from the 2025-11-25 specification (23 distinct features) and a **production service** integrated into the `recipe-web-app` microservices ecosystem.
+Built as both a **learning showcase** demonstrating every MCP capability from the
+2025-11-25 specification (23 distinct features) and a **production service** integrated
+into the `recipe-web-app` microservices ecosystem.
 
 ## Tech Stack
 
-| Component       | Technology              | Purpose                                     |
-| --------------- | ----------------------- | ------------------------------------------- |
-| Framework       | FastMCP 3.1.1+          | MCP server with native OTel + schema gen    |
-| Language        | Python 3.13+            | Latest stable, async/await                  |
-| Runtime Manager | mise                    | Python version + task runner                |
-| Package Manager | uv                      | Fast deterministic dependency resolution    |
-| Database        | SQLite (aiosqlite)      | Zero-infrastructure, WAL mode               |
-| Cache           | Redis 7+                | API response caching, session state         |
-| ORM             | SQLAlchemy 2.0+         | Async support, repository pattern           |
-| Validation      | Pydantic 2.10+          | Automatic JSON Schema for tool parameters   |
-| Tracing         | OpenTelemetry + Jaeger  | Distributed tracing                         |
-| Testing         | pytest + pytest-asyncio | Async test support with coverage            |
+| Component       | Technology              | Purpose                                   |
+| --------------- | ----------------------- | ----------------------------------------- |
+| Framework       | FastMCP 3.1.1+          | MCP server with native OTel + schema gen  |
+| Language        | Python 3.13+            | Latest stable, async/await                |
+| Runtime Manager | mise                    | Python version + task runner              |
+| Package Manager | uv                      | Fast deterministic dependency resolution  |
+| Database        | SQLite (aiosqlite)      | Zero-infrastructure, WAL mode             |
+| Cache           | Redis 7+                | API response caching, session state       |
+| ORM             | SQLAlchemy 2.0+         | Async support, repository pattern         |
+| Validation      | Pydantic 2.10+          | Automatic JSON Schema for tool parameters |
+| Tracing         | OpenTelemetry + Jaeger  | Distributed tracing                       |
+| Testing         | pytest + pytest-asyncio | Async test support with coverage          |
 
 ## Quickstart
 
@@ -40,7 +43,7 @@ mise run dev
 
 ## Project Structure
 
-```
+```text
 recipe-mcp-server/
 ├── .mise.toml                        # mise: Python version + uv + task runner
 ├── pyproject.toml                    # uv: dependencies + build + tool config
@@ -77,23 +80,23 @@ recipe-mcp-server/
 
 All tasks are run via `mise run <task>`:
 
-| Task             | Description                                  |
-| ---------------- | -------------------------------------------- |
-| `dev`            | Run server locally (stdio mode)              |
-| `dev-http`       | Run server locally (HTTP mode)               |
-| `test`           | Run all tests                                |
-| `test-unit`      | Run unit tests only                          |
-| `test-integration` | Run integration tests (needs Redis)        |
-| `test-e2e`       | Run end-to-end MCP protocol tests            |
-| `test-coverage`  | Run tests with coverage report (85% min)     |
-| `lint`           | Run all linters (ruff + mypy)                |
-| `fmt`            | Auto-format code                             |
-| `security`       | Run security checks (pip-audit + bandit)     |
-| `db-migrate`     | Run Alembic migrations                       |
-| `db-seed`        | Seed database with sample data               |
-| `inspect`        | Launch MCP Inspector                         |
-| `check`          | Run all checks (lint + test + security)      |
-| `clean`          | Remove build artifacts and caches            |
+| Task               | Description                              |
+| ------------------ | ---------------------------------------- |
+| `dev`              | Run server locally (stdio mode)          |
+| `dev-http`         | Run server locally (HTTP mode)           |
+| `test`             | Run all tests                            |
+| `test-unit`        | Run unit tests only                      |
+| `test-integration` | Run integration tests (needs Redis)      |
+| `test-e2e`         | Run end-to-end MCP protocol tests        |
+| `test-coverage`    | Run tests with coverage report (85% min) |
+| `lint`             | Run all linters (ruff + mypy)            |
+| `fmt`              | Auto-format code                         |
+| `security`         | Run security checks (pip-audit + bandit) |
+| `db-migrate`       | Run Alembic migrations                   |
+| `db-seed`          | Seed database with sample data           |
+| `inspect`          | Launch MCP Inspector                     |
+| `check`            | Run all checks (lint + test + security)  |
+| `clean`            | Remove build artifacts and caches        |
 
 ## Contributing
 
@@ -101,9 +104,11 @@ All tasks are run via `mise run <task>`:
 2. Install dependencies: `uv sync`
 3. Git hooks are managed by [lefthook](https://github.com/evilmartians/lefthook) and install automatically
 4. Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format:
-   ```
+
+   ```text
    feat(tools): add recipe search tool
    fix(db): handle concurrent WAL writes
    docs: update quickstart guide
    ```
+
 5. All checks must pass before push: lint, type check, unit tests

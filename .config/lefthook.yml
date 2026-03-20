@@ -58,7 +58,8 @@ pre-commit:
 
           - name: markdownlint
             glob: "*.md"
-            run: markdownlint-cli2 --config .config/.markdownlint-cli2.jsonc {staged_files}
+            run: markdownlint-cli2 --fix --config .config/.markdownlint-cli2.jsonc {staged_files}
+            stage_fixed: true
 
           - name: shellcheck
             glob: "*.{sh,bash}"
