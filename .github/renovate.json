@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "schedule:weekends", ":semanticCommits"],
+  "reviewers": ["jsamuelsen11"],
+  "labels": ["dependencies"],
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 10,
+  "enabledManagers": ["pep621", "github-actions", "dockerfile", "docker-compose"],
+  "packageRules": [
+    {
+      "description": "Group all non-major runtime deps",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "runtime dependencies (non-major)"
+    },
+    {
+      "description": "Group all non-major dev deps and automerge",
+      "matchDepTypes": ["devDependencies", "optional-dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group Docker updates",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "Docker images"
+    },
+    {
+      "description": "Major updates get individual PRs, never automerge",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Pin actions to full SHA for security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    }
+  ]
+}

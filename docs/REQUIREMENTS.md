@@ -957,13 +957,7 @@ This project demonstrates **23 distinct MCP capabilities**:
 {
   "id": 1,
   "name": "Classic Margherita Pizza",
-  "ingredients": [
-    "Pizza dough",
-    "Tomato sauce",
-    "Fresh mozzarella",
-    "Fresh basil",
-    "Olive oil"
-  ],
+  "ingredients": ["Pizza dough", "Tomato sauce", "Fresh mozzarella", "Fresh basil", "Olive oil"],
   "instructions": ["Preheat oven to 475F...", "Roll out pizza dough..."],
   "prepTimeMinutes": 20,
   "cookTimeMinutes": 15,
@@ -1580,7 +1574,7 @@ run = "uv run python scripts/seed_db.py"
 
 [tasks.inspect]
 description = "Launch MCP Inspector"
-run = "npx @modelcontextprotocol/inspector uv run python -m recipe_mcp_server"
+run = "mcp-inspector uv run python -m recipe_mcp_server"
 
 [tasks.clean]
 description = "Remove build artifacts and caches"
@@ -1621,13 +1615,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import httpx; httpx.get('http://localhost:8000/health')",
-        ]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
       interval: 30s
       timeout: 5s
       retries: 3

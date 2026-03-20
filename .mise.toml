@@ -1,16 +1,32 @@
 [tools]
-python = "3.13"
-uv = "latest"
-taplo = "latest"
+actionlint = "latest"
+"aqua:jessfraz/dockfmt" = "latest"
+checkov = "latest"
+docker-cli = "latest"
+docker-compose = "latest"
+gitleaks = "latest"
+hadolint = "latest"
+kubeconform = "latest"
+kubectl = "latest"
+kustomize = "latest"
 lefthook = "latest"
+markdownlint-cli2 = "latest"
+"npm:@modelcontextprotocol/inspector" = "latest"
 "pipx:gitfluff" = "latest"
+prettier = "latest"
+python = "3.13"
+shellcheck = "latest"
+shfmt = "latest"
+taplo = "latest"
+uv = "latest"
+yamllint = "latest"
 
 [settings]
 python.uv_venv_auto = "source"
 
 [_.python.venv]
-path = ".venv"
 create = true
+path = ".venv"
 
 [tasks.dev]
 description = "Run server locally (stdio mode)"
@@ -74,12 +90,12 @@ run = "uv run python scripts/seed_db.py"
 
 [tasks.inspect]
 description = "Launch MCP Inspector"
-run = "npx @modelcontextprotocol/inspector uv run python -m recipe_mcp_server"
+run = "mcp-inspector uv run python -m recipe_mcp_server"
 
 [tasks.clean]
 description = "Remove build artifacts and caches"
 run = "rm -rf .venv __pycache__ .pytest_cache .mypy_cache .ruff_cache htmlcov dist build *.egg-info"
 
 [tasks.check]
-description = "Run all checks (lint + test + security)"
 depends = ["lint", "test", "security"]
+description = "Run all checks (lint + test + security)"
