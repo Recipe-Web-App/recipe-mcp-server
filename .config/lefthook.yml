@@ -9,7 +9,6 @@ pre-commit:
     # === Job 1: Format ===
     # Auto-fix formatting issues before linting sees the code
     - name: format
-      exclude: "^(\\.beads/|\\.beads-hooks/|\\.claude/).*$"
       group:
         parallel: true
         jobs:
@@ -41,7 +40,10 @@ pre-commit:
     # === Job 2: Lint ===
     # Check formatted code for issues
     - name: lint
-      exclude: "^(\\.beads/|\\.beads-hooks/|\\.claude/).*$"
+      exclude:
+        - .beads/**
+        - .beads-hooks/**
+        - .claude/**
       group:
         parallel: true
         jobs:
@@ -75,7 +77,7 @@ pre-commit:
             run: taplo lint --config .config/taplo.toml {staged_files}
 
           - name: kubeconform
-            glob: "k8s/**/*.{yaml,yml}"
+            glob: "*.{yaml,yml}"
             root: "k8s/"
             run: kubeconform -strict -ignore-missing-schemas {staged_files}
 
@@ -89,7 +91,8 @@ pre-commit:
             run: gitleaks protect --staged --no-banner
 
           - name: checkov
-            glob: "k8s/**/*.{yaml,yml}"
+            glob: "*.{yaml,yml}"
+            root: "k8s/"
             run: checkov --config-file .config/checkov.yml
 
 pre-push:
