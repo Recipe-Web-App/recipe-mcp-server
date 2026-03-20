@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
-      - run: uv sync --frozen
+      - run: uv sync --frozen --extra dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
 
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
-      - run: uv sync --frozen
+      - run: uv sync --frozen --extra dev
       - run: uv run mypy src/
 
   test:
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
-      - run: uv sync --frozen
+      - run: uv sync --frozen --extra dev
       - run: uv run pytest --cov=src/recipe_mcp_server --cov-report=xml -v
       - name: Upload coverage
         if: always()
