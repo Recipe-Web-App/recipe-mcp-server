@@ -1,7 +1,6 @@
 [tools]
 actionlint = "latest"
 "aqua:jessfraz/dockfmt" = "latest"
-checkov = "latest"
 docker-cli = "latest"
 docker-compose = "latest"
 gitleaks = "latest"
