@@ -114,6 +114,7 @@ class UserProfileTable(Base):
     dietary_restrictions: Mapped[str | None] = mapped_column(Text)  # JSON array
     allergies: Mapped[str | None] = mapped_column(Text)  # JSON array
     preferred_cuisines: Mapped[str | None] = mapped_column(Text)  # JSON array
+    calorie_target: Mapped[int | None] = mapped_column(Integer)
     default_servings: Mapped[int] = mapped_column(Integer, default=4)
     unit_system: Mapped[str] = mapped_column(
         Text, default="metric", server_default=text("'metric'")
@@ -146,12 +147,18 @@ class MealPlanTable(Base):
     start_date: Mapped[str] = mapped_column(Text, nullable=False)
     end_date: Mapped[str] = mapped_column(Text, nullable=False)
     preferences: Mapped[str | None] = mapped_column(Text)  # JSON
+    day_dates: Mapped[str | None] = mapped_column(Text)  # JSON array of all day dates
     created_at: Mapped[str] = mapped_column(Text, default=_utc_now)
 
     items: Mapped[list[MealPlanItemTable]] = relationship(
         back_populates="plan",
         cascade="all, delete-orphan",
         lazy="selectin",
+        order_by=lambda: [
+            MealPlanItemTable.day_date,
+            MealPlanItemTable.meal_type,
+            MealPlanItemTable.id,
+        ],
     )
 
 

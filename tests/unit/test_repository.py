@@ -109,6 +109,10 @@ class TestRecipeRepo:
         assert page1.total == 5
         assert page1.next_cursor is not None
 
+    async def test_list_invalid_limit(self, recipe_repo: RecipeRepo) -> None:
+        with pytest.raises(ValueError, match="limit must be >= 1"):
+            await recipe_repo.list_recipes(limit=0)
+
     async def test_search(self, recipe_repo: RecipeRepo) -> None:
         await recipe_repo.create(RecipeCreate(title="Chicken Pasta", area="Italian"))
         await recipe_repo.create(RecipeCreate(title="Beef Stew", area="British"))
@@ -173,6 +177,21 @@ class TestUserRepo:
     async def test_update_nonexistent(self, user_repo: UserRepo) -> None:
         result = await user_repo.update("nonexistent", {"display_name": "X"})
         assert result is None
+
+    async def test_update_unknown_field_raises(self, user_repo: UserRepo) -> None:
+        await user_repo.get_or_create("user1")
+        with pytest.raises(ValueError, match="Unknown user profile field"):
+            await user_repo.update("user1", {"nonexistent_field": "value"})
+
+    async def test_update_calorie_target(self, user_repo: UserRepo) -> None:
+        await user_repo.get_or_create("user1")
+        profile = DietaryProfile(calorie_target=2000)
+        updated = await user_repo.update("user1", {"dietary_profile": profile})
+        assert updated is not None
+        assert updated.dietary_profile.calorie_target == 2000
+
+        fetched = await user_repo.get_or_create("user1")
+        assert fetched.dietary_profile.calorie_target == 2000
 
 
 class TestFavoriteRepo:
@@ -274,6 +293,36 @@ class TestMealPlanRepo:
     async def test_list_for_user_empty(self, meal_plan_repo: MealPlanRepo) -> None:
         plans = await meal_plan_repo.list_for_user("nobody")
         assert plans == []
+
+    async def test_empty_day_preserved(self, meal_plan_repo: MealPlanRepo) -> None:
+        plan = MealPlan(
+            name="Empty Day Test",
+            user_id="user1",
+            start_date="2026-03-19",
+            end_date="2026-03-20",
+            days=[
+                DayPlan(date="2026-03-19", meals=[]),
+                DayPlan(
+                    date="2026-03-20",
+                    meals=[
+                        MealPlanItem(
+                            day_date="2026-03-20",
+                            meal_type=MealType.LUNCH,
+                            custom_meal="Sandwich",
+                        )
+                    ],
+                ),
+            ],
+        )
+        created = await meal_plan_repo.create(plan)
+        assert created.id is not None
+        fetched = await meal_plan_repo.get(created.id)
+        assert fetched is not None
+        assert len(fetched.days) == 2
+        dates = [d.date for d in fetched.days]
+        assert "2026-03-19" in dates
+        empty_day = next(d for d in fetched.days if d.date == "2026-03-19")
+        assert empty_day.meals == []
 
 
 class TestAuditRepo:

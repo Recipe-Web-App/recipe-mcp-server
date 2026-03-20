@@ -234,13 +234,11 @@ class RecipeRepo:
     async def list_recipes(
         self, cursor: str | None = None, limit: int = 50
     ) -> PaginatedResponse[RecipeSummary]:
+        if limit < 1:
+            raise ValueError(f"limit must be >= 1, got {limit!r}")
         async with get_session(self._factory) as session:
             # Order by id for stable, cursor-compatible pagination
-            stmt = (
-                select(RecipeTable)
-                .where(RecipeTable.is_deleted == 0)
-                .order_by(RecipeTable.id)
-            )
+            stmt = select(RecipeTable).where(RecipeTable.is_deleted == 0).order_by(RecipeTable.id)
             if cursor:
                 stmt = stmt.where(RecipeTable.id > cursor)
             stmt = stmt.limit(limit + 1)
@@ -251,9 +249,7 @@ class RecipeRepo:
                 rows = rows[:limit]
 
             count_result = await session.execute(
-                select(func.count()).select_from(RecipeTable).where(
-                    RecipeTable.is_deleted == 0
-                )
+                select(func.count()).select_from(RecipeTable).where(RecipeTable.is_deleted == 0)
             )
             total = count_result.scalar_one()
 
@@ -280,6 +276,19 @@ class RecipeRepo:
             return [_summary_from_row(r) for r in rows]
 
 
+_ALLOWED_USER_FIELDS = frozenset(
+    {
+        "dietary_profile",
+        "dietary_restrictions",
+        "allergies",
+        "preferred_cuisines",
+        "display_name",
+        "default_servings",
+        "unit_system",
+    }
+)
+
+
 class UserRepo:
     """Repository for user profile operations."""
 
@@ -304,6 +313,8 @@ class UserRepo:
                 return None
 
             for field, value in data.items():
+                if field not in _ALLOWED_USER_FIELDS:
+                    raise ValueError(f"Unknown user profile field: {field!r}")
                 if field == "dietary_profile":
                     profile = (
                         value if isinstance(value, DietaryProfile) else DietaryProfile(**value)
@@ -311,6 +322,7 @@ class UserRepo:
                     row.dietary_restrictions = _json_dumps(profile.dietary_restrictions)
                     row.allergies = _json_dumps(profile.allergies)
                     row.preferred_cuisines = _json_dumps(profile.preferred_cuisines)
+                    row.calorie_target = profile.calorie_target
                 elif field in ("dietary_restrictions", "allergies", "preferred_cuisines"):
                     setattr(row, field, _json_dumps(value))
                 else:
@@ -329,6 +341,7 @@ class UserRepo:
                 dietary_restrictions=_json_loads_list(row.dietary_restrictions),
                 allergies=_json_loads_list(row.allergies),
                 preferred_cuisines=_json_loads_list(row.preferred_cuisines),
+                calorie_target=row.calorie_target,
             ),
             default_servings=row.default_servings,
             unit_system=row.unit_system,
@@ -417,12 +430,14 @@ class MealPlanRepo:
 
     async def create(self, plan: MealPlan) -> MealPlan:
         async with get_session(self._factory) as session:
+            all_day_dates = [day.date for day in plan.days]
             row = MealPlanTable(
                 user_id=plan.user_id,
                 name=plan.name,
                 start_date=plan.start_date,
                 end_date=plan.end_date,
                 preferences=_json_dumps(plan.preferences),
+                day_dates=_json_dumps(all_day_dates),
             )
             for day in plan.days:
                 for meal in day.meals:
@@ -475,7 +490,7 @@ class MealPlanRepo:
     @staticmethod
     def _to_model(row: MealPlanTable) -> MealPlan:
         items_by_date: dict[str, list[MealPlanItem]] = {}
-        for item in row.items:
+        for item in sorted(row.items, key=lambda i: (i.day_date, i.meal_type, i.id)):
             meal = MealPlanItem(
                 id=item.id,
                 day_date=item.day_date,
@@ -488,7 +503,10 @@ class MealPlanRepo:
 
         from recipe_mcp_server.models.meal_plan import DayPlan
 
-        days = [DayPlan(date=date, meals=meals) for date, meals in sorted(items_by_date.items())]
+        # Reconstruct all days including explicitly stored empty days
+        stored_dates = _json_loads_list(row.day_dates) if row.day_dates else []
+        all_dates = sorted(set(stored_dates) | set(items_by_date.keys()))
+        days = [DayPlan(date=date, meals=items_by_date.get(date, [])) for date in all_dates]
 
         prefs_raw = row.preferences
         preferences = json.loads(prefs_raw) if prefs_raw else None
