@@ -105,6 +105,8 @@ pre-push:
       run: uv run --extra dev mypy src/
     lint:
       run: uv run --extra dev ruff check .
+    pip-audit:
+      run: uv run --extra dev pip-audit
 
 commit-msg:
   commands:

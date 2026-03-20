@@ -30,6 +30,15 @@ jobs:
       - run: uv sync --frozen --extra dev
       - run: uv run mypy src/
 
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: uv sync --frozen --extra dev
+      - run: uv run pip-audit
+
   test:
     name: Test
     runs-on: ubuntu-latest
