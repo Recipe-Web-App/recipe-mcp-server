@@ -29,10 +29,15 @@
 
 ### 1.1 Purpose
 
-The Recipe MCP Server is a **production-ready Model Context Protocol server** that provides LLM-powered clients with comprehensive recipe management capabilities. It serves a dual purpose:
+The Recipe MCP Server is a **production-ready Model Context Protocol server** that provides
+LLM-powered clients with comprehensive recipe management capabilities. It serves a dual purpose:
 
-1. **Learning showcase** -- demonstrates **every MCP capability** from the 2025-11-25 specification (23 distinct features) with real-world, non-trivial examples. This is designed to be the definitive reference for understanding what MCP can do.
-2. **Production service** -- integrates into the `recipe-web-app` microservices ecosystem as a first-class backend, built to the same standards as sibling services (85%+ test coverage, Docker/K8s deployment, structured observability)
+1. **Learning showcase** -- demonstrates **every MCP capability** from the 2025-11-25
+   specification (23 distinct features) with real-world, non-trivial examples. This is
+   designed to be the definitive reference for understanding what MCP can do.
+2. **Production service** -- integrates into the `recipe-web-app` microservices ecosystem
+   as a first-class backend, built to the same standards as sibling services (85%+ test
+   coverage, Docker/K8s deployment, structured observability)
 
 ### 1.2 Target Clients
 
@@ -67,7 +72,9 @@ The Recipe MCP Server is a **production-ready Model Context Protocol server** th
 
 ### 1.4 Toolchain: mise + uv
 
-The project uses **mise** (formerly rtx) for runtime version management and task execution, paired with **uv** for Python package management. This replaces traditional Makefile + pip/poetry workflows.
+The project uses **mise** (formerly rtx) for runtime version management and task execution,
+paired with **uv** for Python package management. This replaces traditional
+Makefile + pip/poetry workflows.
 
 **Division of responsibility:**
 
@@ -94,7 +101,7 @@ mise run dev        # Starts the server
 
 This server sits alongside 17+ services in `recipe-web-app/`:
 
-```
+```text
 recipe-web-app/
   auth-service/              # Go -- OAuth2 authentication
   recipe-management-service/ # Java/Spring Boot -- recipe CRUD
@@ -105,7 +112,9 @@ recipe-web-app/
   ...
 ```
 
-The MCP server can optionally integrate with the existing `auth-service` for OAuth token validation and `recipe-management-service` for recipe data, but operates independently with its own SQLite store and direct API integrations.
+The MCP server can optionally integrate with the existing `auth-service` for OAuth token
+validation and `recipe-management-service` for recipe data, but operates independently
+with its own SQLite store and direct API integrations.
 
 ---
 
@@ -285,9 +294,12 @@ flowchart LR
 
 ### 3.1 Tools (15)
 
-> **MCP Concept: Tools** are executable functions the server exposes to LLM clients. The client decides when to call them based on user intent. Tools are the primary way an MCP server _acts_ on the world.
+> **MCP Concept: Tools** are executable functions the server exposes to LLM clients.
+> The client decides when to call them based on user intent. Tools are the primary
+> way an MCP server _acts_ on the world.
 
-Every tool in this project declares **annotations** (hints about behavior) and **tags** (for filtering). See [Section 3.6](#36-tool-annotations) for the annotation details.
+Every tool in this project declares **annotations** (hints about behavior) and **tags**
+(for filtering). See [Section 3.6](#36-tool-annotations) for the annotation details.
 
 #### Recipe CRUD
 
@@ -346,7 +358,8 @@ Every tool in this project declares **annotations** (hints about behavior) and *
 
 #### UI Resources (2)
 
-> **MCP Concept: UI Resources** return renderable content (HTML, Markdown) that MCP clients can display directly to users, not just pass to the LLM.
+> **MCP Concept: UI Resources** return renderable content (HTML, Markdown) that MCP
+> clients can display directly to users, not just pass to the LLM.
 
 | URI Pattern                     | Description                                                                                                         | Content Type |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
@@ -355,14 +368,18 @@ Every tool in this project declares **annotations** (hints about behavior) and *
 
 #### Binary/Blob Resources (2)
 
-> **MCP Concept: Blob Resources** return base64-encoded binary content. This demonstrates that MCP resources aren't limited to text -- they can serve images, PDFs, audio, or any binary format.
+> **MCP Concept: Blob Resources** return base64-encoded binary content. This demonstrates
+> that MCP resources aren't limited to text -- they can serve images, PDFs, audio, or
+> any binary format.
 
 | URI Pattern                     | Description                                                                                                                  | Content Type | Source                   |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------ |
 | `recipe://photo/{recipe_id}`    | Recipe photo as base64-encoded PNG. Fetched from TheMealDB `strMealThumb` URL or Foodish, then served as a blob resource.    | `image/png`  | TheMealDB / Foodish      |
 | `nutrition://chart/{food_name}` | Dynamically generated macronutrient pie chart (protein/fat/carbs) as base64-encoded PNG. Generated server-side using Pillow. | `image/png`  | Generated from USDA data |
 
-**Why this matters:** Many MCP use cases involve non-text data (charts, diagrams, photos). Blob resources let the server deliver binary content through the same resource URI system, with the client deciding how to render it.
+**Why this matters:** Many MCP use cases involve non-text data (charts, diagrams, photos).
+Blob resources let the server deliver binary content through the same resource URI system,
+with the client deciding how to render it.
 
 ### 3.3 Prompts (8)
 
@@ -386,7 +403,8 @@ Sampling allows the server to request LLM completions from the client during too
 | `suggest_recipe_variations` | `get_recipe` when `include_variations=true`     | "Given this recipe for {title}, suggest 3 creative variations: one fusion twist, one seasonal adaptation, and one simplified version" | Enhance recipe results with AI-generated creative alternatives |
 | `pair_ingredients`          | `generate_meal_plan` during side dish selection | "For a main dish featuring {main_ingredient} with {cuisine} flavors, suggest 3 complementary side ingredients with brief reasoning"   | AI-assisted complementary ingredient selection for meal plans  |
 
-**Implementation:** Invoked via `ctx.sample()` within tool handlers. The client LLM processes the request and returns suggestions that are incorporated into the tool response.
+**Implementation:** Invoked via `ctx.sample()` within tool handlers. The client LLM
+processes the request and returns suggestions that are incorporated into the tool response.
 
 ### 3.5 Elicitation (3)
 
@@ -398,11 +416,15 @@ Elicitation allows the server to request structured information from the user du
 | `confirm_serving_size`          | `scale_recipe` when `target_servings > 20`                          | `{confirmed_servings: int, reason: str ("party"\|"meal_prep"\|"restaurant"\|"other")}`     | Verify unusual serving counts aren't typos                  |
 | `clarify_available_ingredients` | `leftover_recipe` prompt when ingredients are vague                 | `{ingredients: str[], pantry_staples_available: bool, cooking_equipment: str[]}`           | Get precise ingredient list and kitchen context             |
 
-**Implementation:** Invoked via `ctx.elicit()` with a Pydantic model defining the form schema. Tool execution pauses until the user responds.
+**Implementation:** Invoked via `ctx.elicit()` with a Pydantic model defining the form
+schema. Tool execution pauses until the user responds.
 
 ### 3.6 Tool Annotations
 
-> **MCP Concept: Tool Annotations** are hints that describe a tool's behavior to the client. They don't enforce anything -- they help clients make smarter decisions about when/how to call tools (e.g., skipping confirmation for read-only tools, warning before destructive ones).
+> **MCP Concept: Tool Annotations** are hints that describe a tool's behavior to the
+> client. They don't enforce anything -- they help clients make smarter decisions about
+> when/how to call tools (e.g., skipping confirmation for read-only tools, warning
+> before destructive ones).
 
 | Annotation             | Meaning                                                                                         | Tools Using It                                                                                                                                              |
 | ---------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -411,11 +433,17 @@ Elicitation allows the server to request structured information from the user du
 | `idempotentHint=true`  | Calling the tool multiple times with the same input has the same effect as calling it once      | `save_favorite`, `update_recipe`, `convert_units`                                                                                                           |
 | `openWorldHint=true`   | Tool can handle a wide variety of input formats and does not require strict parameter adherence | `search_recipes` (accepts natural language queries, partial matches, fuzzy cuisine names)                                                                   |
 
-**Default behavior:** Tools without explicit annotations use MCP defaults (`readOnlyHint=false`, `destructiveHint=false`, `idempotentHint=false`, `openWorldHint=false`). This applies to: `create_recipe`, `generate_meal_plan`, `generate_shopping_list`, `scale_recipe`.
+**Default behavior:** Tools without explicit annotations use MCP defaults
+(`readOnlyHint=false`, `destructiveHint=false`, `idempotentHint=false`,
+`openWorldHint=false`). This applies to: `create_recipe`, `generate_meal_plan`,
+`generate_shopping_list`, `scale_recipe`.
 
 ### 3.7 Embedded Resources in Tool Results
 
-> **MCP Concept: Embedded Resources** allow tool results to include full resource objects alongside their text/JSON output. This lets a single tool call deliver both structured data (for the LLM) and rendered content (for the user) without requiring a separate `resources/read` call.
+> **MCP Concept: Embedded Resources** allow tool results to include full resource objects
+> alongside their text/JSON output. This lets a single tool call deliver both structured
+> data (for the LLM) and rendered content (for the user) without requiring a separate
+> `resources/read` call.
 
 | Tool                       | Embedded Resource                      | Why                                                                                                                                |
 | -------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -441,7 +469,9 @@ async def get_recipe(recipe_id: str, ctx: Context) -> list[Content]:
 
 ### 3.8 Resource Subscriptions & Notifications
 
-> **MCP Concept: Resource Subscriptions** let clients subscribe to specific resources and receive notifications when those resources change. **Notifications** are one-way messages from server to client about state changes.
+> **MCP Concept: Resource Subscriptions** let clients subscribe to specific resources
+> and receive notifications when those resources change. **Notifications** are one-way
+> messages from server to client about state changes.
 
 #### Resource Subscriptions (2)
 
@@ -469,11 +499,16 @@ async def get_recipe(recipe_id: str, ctx: Context) -> list[Content]:
 | ---------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `notifications/tools/list_changed` | Seasonal tool `get_holiday_recipes` dynamically registered (Nov-Dec) or unregistered (Jan-Oct) | Demonstrates that the tool set can change at runtime -- clients should re-enumerate tools |
 
-**Why this matters:** Subscriptions + notifications enable reactive UIs. Without them, clients must poll for changes. This is the MCP equivalent of WebSocket subscriptions or GraphQL subscriptions.
+**Why this matters:** Subscriptions + notifications enable reactive UIs. Without them,
+clients must poll for changes. This is the MCP equivalent of WebSocket subscriptions
+or GraphQL subscriptions.
 
 ### 3.9 Progress Reporting
 
-> **MCP Concept: Progress Reporting** lets long-running tools send incremental status updates to the client during execution. The client can display these to the user (e.g., a progress bar or status messages). Uses `progressToken` from the request metadata.
+> **MCP Concept: Progress Reporting** lets long-running tools send incremental status
+> updates to the client during execution. The client can display these to the user
+> (e.g., a progress bar or status messages). Uses `progressToken` from the request
+> metadata.
 
 | Tool                       | Progress Steps               | Example Messages                                                                                          |
 | -------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -497,7 +532,9 @@ async def search_recipes(query: str, ctx: Context) -> dict:
 
 ### 3.10 Server Logging
 
-> **MCP Concept: Server Logging** sends structured log messages from the server to the MCP client (not to files -- that's structlog's job). This gives clients visibility into what the server is doing, useful for debugging and transparency.
+> **MCP Concept: Server Logging** sends structured log messages from the server to the
+> MCP client (not to files -- that's structlog's job). This gives clients visibility
+> into what the server is doing, useful for debugging and transparency.
 
 | Level           | When Used                               | Example                                                                      |
 | --------------- | --------------------------------------- | ---------------------------------------------------------------------------- |
@@ -511,11 +548,14 @@ async def search_recipes(query: str, ctx: Context) -> dict:
 - **Server logging** (`ctx.info()` etc.) → sent to MCP client → visible in Claude Desktop / MCP Inspector
 - **structlog** → written to stdout/files → visible in Docker logs / Jaeger
 
-Both systems log every tool call, but to different audiences. This is deliberate -- the client sees high-level events while operators see detailed traces.
+Both systems log every tool call, but to different audiences. This is deliberate -- the
+client sees high-level events while operators see detailed traces.
 
 ### 3.11 Argument Completion
 
-> **MCP Concept: Completion** provides auto-complete suggestions for prompt arguments and resource template parameters. When a client starts typing a value, the server can suggest valid completions.
+> **MCP Concept: Completion** provides auto-complete suggestions for prompt arguments
+> and resource template parameters. When a client starts typing a value, the server
+> can suggest valid completions.
 
 | Component                              | Parameter      | Completions Source                                                                                     |
 | -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
@@ -537,7 +577,8 @@ async def cuisine_completer(prefix: str) -> list[str]:
 
 ### 3.12 Pagination
 
-> **MCP Concept: Pagination** uses opaque cursor tokens (not page numbers) to paginate through large result sets. This works for both resource reads and tool results.
+> **MCP Concept: Pagination** uses opaque cursor tokens (not page numbers) to paginate
+> through large result sets. This works for both resource reads and tool results.
 
 | Component                   | Pagination Support                                                 | Page Size                     |
 | --------------------------- | ------------------------------------------------------------------ | ----------------------------- |
@@ -547,11 +588,14 @@ async def cuisine_completer(prefix: str) -> list[str]:
 | `tools/list`                | Cursor-based pagination of the tool list                           | 50 tools per page             |
 | `prompts/list`              | Cursor-based pagination of the prompt list                         | 50 prompts per page           |
 
-**Why cursors, not page numbers?** Cursor tokens are opaque strings that encode position in the result set. This avoids issues with items being added/removed between page fetches (which breaks offset-based pagination).
+**Why cursors, not page numbers?** Cursor tokens are opaque strings that encode position
+in the result set. This avoids issues with items being added/removed between page fetches
+(which breaks offset-based pagination).
 
 ### 3.13 Cancellation
 
-> **MCP Concept: Cancellation** lets clients abort in-progress tool calls by sending a `notifications/cancelled` message with the original request ID and an optional reason.
+> **MCP Concept: Cancellation** lets clients abort in-progress tool calls by sending a
+> `notifications/cancelled` message with the original request ID and an optional reason.
 
 | Tool                 | Cancellation Behavior                                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -572,7 +616,9 @@ async def search_recipes(query: str, ctx: Context) -> dict:
 
 ### 3.14 Session State
 
-> **MCP Concept: Session State** lets tools persist data across multiple calls within the same MCP session (connection). State is lost when the session ends. This is different from database persistence -- it's for ephemeral, session-scoped context.
+> **MCP Concept: Session State** lets tools persist data across multiple calls within
+> the same MCP session (connection). State is lost when the session ends. This is
+> different from database persistence -- it's for ephemeral, session-scoped context.
 
 | State Key          | Set By                                           | Used By                                                 | Purpose                                                                                    |
 | ------------------ | ------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -600,17 +646,23 @@ async def generate_meal_plan(days: int, ctx: Context) -> MealPlan:
 
 ### 3.15 Component Visibility
 
-> **MCP Concept: Component Visibility** lets the server dynamically show/hide tools, resources, or prompts for a specific session. This is useful for progressive disclosure -- showing more features as the user needs them, or hiding features that are no longer relevant.
+> **MCP Concept: Component Visibility** lets the server dynamically show/hide tools,
+> resources, or prompts for a specific session. This is useful for progressive
+> disclosure -- showing more features as the user needs them, or hiding features
+> that are no longer relevant.
 
 | Action                                                   | Trigger                                                 | Effect                                                                                                                        |
 | -------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `ctx.disable_components(["gather_dietary_preferences"])` | After dietary preferences are collected via elicitation | The `gather_dietary_preferences` elicitation flow is hidden from the tool list for this session (it's already been collected) |
 
-**Why this matters:** Without visibility control, clients see all tools/resources/prompts at all times. This can be overwhelming. Visibility control lets the server curate what's available based on session context.
+**Why this matters:** Without visibility control, clients see all tools/resources/prompts
+at all times. This can be overwhelming. Visibility control lets the server curate what's
+available based on session context.
 
 ### 3.16 Tags & Icons
 
-> **MCP Concept: Tags** categorize components for filtering/grouping. **Icons** provide visual representations in supporting clients. Both are optional metadata.
+> **MCP Concept: Tags** categorize components for filtering/grouping. **Icons** provide
+> visual representations in supporting clients. Both are optional metadata.
 
 #### Tags
 
@@ -637,11 +689,13 @@ async def generate_meal_plan(days: int, ctx: Context) -> MealPlan:
 
 ### 3.17 Server Composition
 
-> **MCP Concept: Server Composition** lets you build an MCP server by combining multiple smaller servers. Each sub-server is "mounted" at a namespace prefix, keeping its tools/resources/prompts isolated but accessible through the parent server.
+> **MCP Concept: Server Composition** lets you build an MCP server by combining multiple
+> smaller servers. Each sub-server is "mounted" at a namespace prefix, keeping its
+> tools/resources/prompts isolated but accessible through the parent server.
 
 **Architecture:**
 
-```
+```text
 Main Server (recipe-mcp-server)
 ├── All recipe tools, resources, prompts (no prefix)
 └── Mounted: NutritionMCPServer (prefix: "nutrition")
@@ -677,7 +731,10 @@ mcp.mount(nutrition_mcp, prefix="nutrition")
 
 ### 3.18 Async Tasks (Experimental)
 
-> **MCP Concept: Tasks** (experimental in 2025-11-25 spec) enable fire-and-forget tool execution. The client calls a tool, receives a task handle immediately, and polls for completion. This is essential for long-running operations that shouldn't block the conversation.
+> **MCP Concept: Tasks** (experimental in 2025-11-25 spec) enable fire-and-forget tool
+> execution. The client calls a tool, receives a task handle immediately, and polls for
+> completion. This is essential for long-running operations that shouldn't block the
+> conversation.
 
 | Tool                 | Task Support                | Poll Interval       | Cancellation                      |
 | -------------------- | --------------------------- | ------------------- | --------------------------------- |
@@ -685,7 +742,7 @@ mcp.mount(nutrition_mcp, prefix="nutrition")
 
 **Task lifecycle:**
 
-```
+```text
 Client                          Server
   │                               │
   ├─ tools/call(generate_meal_plan, _meta.progressToken=T)
@@ -701,7 +758,8 @@ Client                          Server
 
 **Task states:** `working` → `completed` | `failed` | `cancelled` | `input_required`
 
-The `input_required` state is used when the task needs elicitation mid-execution (e.g., dietary preferences needed during meal plan generation).
+The `input_required` state is used when the task needs elicitation mid-execution
+(e.g., dietary preferences needed during meal plan generation).
 
 ### 3.19 Capability Summary
 
@@ -957,13 +1015,7 @@ This project demonstrates **23 distinct MCP capabilities**:
 {
   "id": 1,
   "name": "Classic Margherita Pizza",
-  "ingredients": [
-    "Pizza dough",
-    "Tomato sauce",
-    "Fresh mozzarella",
-    "Fresh basil",
-    "Olive oil"
-  ],
+  "ingredients": ["Pizza dough", "Tomato sauce", "Fresh mozzarella", "Fresh basil", "Olive oil"],
   "instructions": ["Preheat oven to 475F...", "Roll out pizza dough..."],
   "prepTimeMinutes": 20,
   "cookTimeMinutes": 15,
@@ -1129,7 +1181,7 @@ CREATE INDEX idx_audit_log_request ON audit_log(request_id);
 
 ### 5.2 Pydantic Models (Domain)
 
-```
+```text
 models/
   recipe.py       -> Recipe, RecipeCreate, RecipeUpdate, RecipeSummary, Ingredient, ScaledIngredient
   nutrition.py    -> NutrientInfo, FoodItem, NutritionReport, IngredientNutrition
@@ -1428,7 +1480,7 @@ sequenceDiagram
 
 ### 8.1 Domain Exception Hierarchy
 
-```
+```text
 RecipeMCPError (base)
 ├── NotFoundError              # Recipe, food, or meal plan not found
 ├── ValidationError            # Invalid input parameters (caught by Pydantic)
@@ -1456,7 +1508,7 @@ RecipeMCPError (base)
 
 ### 8.3 Fallback Chain
 
-```
+```text
 Recipe Search:    TheMealDB -> Spoonacular -> DummyJSON -> local SQLite -> empty result
 Nutrition:        USDA -> Spoonacular nutrition widget -> nutrition_cache table -> error
 Wine Pairing:     Spoonacular -> error (single source)
@@ -1473,7 +1525,7 @@ Random Image:     Foodish -> recipe.image_url fallback -> placeholder URL
 
 All configuration via environment variables with `RECIPE_MCP_` prefix, loaded by `pydantic-settings`.
 
-```
+```bash
 # Server
 RECIPE_MCP_SERVER_NAME=recipe-mcp-server       # Server display name
 RECIPE_MCP_TRANSPORT=stdio                       # 'stdio' | 'http'
@@ -1580,7 +1632,7 @@ run = "uv run python scripts/seed_db.py"
 
 [tasks.inspect]
 description = "Launch MCP Inspector"
-run = "npx @modelcontextprotocol/inspector uv run python -m recipe_mcp_server"
+run = "mcp-inspector uv run python -m recipe_mcp_server"
 
 [tasks.clean]
 description = "Remove build artifacts and caches"
@@ -1593,7 +1645,8 @@ depends = ["lint", "test", "security"]
 
 ### 9.3 .env.example
 
-A `.env.example` file will be committed with all variables documented and placeholder values. The actual `.env` is gitignored.
+A `.env.example` file will be committed with all variables documented and placeholder
+values. The actual `.env` is gitignored.
 
 ---
 
@@ -1621,13 +1674,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import httpx; httpx.get('http://localhost:8000/health')",
-        ]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -1718,7 +1765,7 @@ mise run inspect                       # Interactive testing of tools/resources/
 
 ### 11.1 Test Pyramid
 
-```
+```text
                     ┌─────────┐
                     │  Load   │  locust: concurrent tool calls, cache performance
                     ├─────────┤
@@ -1733,7 +1780,7 @@ mise run inspect                       # Interactive testing of tools/resources/
 
 ### 11.2 Test Directory Structure
 
-```
+```text
 tests/
   conftest.py                          # Root fixtures: test settings, MCP server, event loop
   factories/
@@ -1807,7 +1854,7 @@ tests/
 
 ### 11.5 CI Pipeline
 
-```
+```text
 lint ──> test-unit ──> test-integration ──> test-e2e ──> test-protocol ──> security ──> build
  │                                                                           │            │
  ruff check                                                              pip-audit     docker
@@ -1832,7 +1879,7 @@ RECIPE_MCP_LIVE_TESTS=1 uv run pytest -m live_api
 
 ## 12. Project Structure
 
-```
+```text
 recipe-mcp-server/
 ├── .env.example
 ├── .gitignore
@@ -2019,7 +2066,9 @@ recipe-mcp-server/
 
 ### Phase 5: MCP Protocol Features
 
-**Goal:** All remaining MCP protocol capabilities -- subscriptions, notifications, progress, logging, pagination, cancellation, session state, visibility, composition, tasks.
+**Goal:** All remaining MCP protocol capabilities -- subscriptions, notifications,
+progress, logging, pagination, cancellation, session state, visibility, composition,
+tasks.
 
 - `resources/subscriptions.py` -- subscription handlers for `recipe://catalog` and `recipe://favorites/{user_id}`
 - Resource list changed + tool list changed notifications
@@ -2105,7 +2154,8 @@ dev = [
 
 ## Appendix B: MCP Capability Cross-Reference
 
-This appendix maps every feature from the MCP 2025-11-25 specification to where it's demonstrated in this project. Use this as a learning index.
+This appendix maps every feature from the MCP 2025-11-25 specification to where it's
+demonstrated in this project. Use this as a learning index.
 
 | MCP Spec Feature           | Spec Section | This Project                                                    | Files                                                                           |
 | -------------------------- | ------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |

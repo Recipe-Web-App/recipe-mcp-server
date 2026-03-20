@@ -1,4 +1,42 @@
-
 # Dolt database files (added by bd init)
 .dolt/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Type checking & linting
+.mypy_cache/
+.ruff_cache/
+
+# Database runtime
+data/
 *.db
+
+# OS
+.DS_Store
+Thumbs.db

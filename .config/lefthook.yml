@@ -1,0 +1,112 @@
+# lefthook.yml — Git hook pipeline
+# https://github.com/evilmartians/lefthook
+#
+# Pipeline: format (auto-fix) → lint (check) → security (scan)
+# Install: lefthook install
+
+pre-commit:
+  jobs:
+    # === Job 1: Format ===
+    # Auto-fix formatting issues before linting sees the code
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: ruff-format
+            glob: "*.py"
+            run: uv run --extra dev ruff format {staged_files}
+            stage_fixed: true
+
+          - name: taplo
+            glob: "*.toml"
+            run: taplo format --config .config/taplo.toml {staged_files}
+            stage_fixed: true
+
+          - name: prettier
+            glob: "*.{json,yaml,yml,md}"
+            run: prettier --config .config/prettierrc.json --write {staged_files}
+            stage_fixed: true
+
+          - name: shfmt
+            glob: "*.{sh,bash,zsh}"
+            run: shfmt -w -i 2 -ci -bn {staged_files}
+            stage_fixed: true
+
+          - name: dockfmt
+            glob: "Dockerfile*"
+            run: dockfmt fmt {staged_files}
+            stage_fixed: true
+
+    # === Job 2: Lint ===
+    # Check formatted code for issues
+    - name: lint
+      exclude:
+        - .beads/**
+        - .beads-hooks/**
+        - .claude/**
+      group:
+        parallel: true
+        jobs:
+          - name: ruff-check
+            glob: "*.py"
+            run: uv run --extra dev ruff check --fix {staged_files}
+            stage_fixed: true
+
+          - name: yamllint
+            glob: "*.{yaml,yml}"
+            run: yamllint -c .config/yamllint.yml {staged_files}
+
+          - name: markdownlint
+            glob: "*.md"
+            run: markdownlint-cli2 --fix --config .config/.markdownlint-cli2.jsonc {staged_files}
+            stage_fixed: true
+
+          - name: shellcheck
+            glob: "*.{sh,bash}"
+            run: shellcheck {staged_files}
+
+          - name: hadolint
+            glob: "Dockerfile*"
+            run: hadolint --config .config/hadolint.yaml {staged_files}
+
+          - name: actionlint
+            glob: ".github/workflows/*.{yaml,yml}"
+            run: actionlint {staged_files}
+
+          - name: taplo-lint
+            glob: "*.toml"
+            run: taplo lint --config .config/taplo.toml {staged_files}
+
+          - name: kubeconform
+            glob: "*.{yaml,yml}"
+            root: "k8s/"
+            run: kubeconform -strict -ignore-missing-schemas {staged_files}
+
+    # === Job 3: Security ===
+    # Scan for secrets and credentials
+    - name: security
+      group:
+        parallel: true
+        jobs:
+          - name: gitleaks
+            run: gitleaks protect --staged --no-banner
+
+          - name: checkov
+            glob: "*.{yaml,yml}"
+            root: "k8s/"
+            run: checkov --config-file .config/checkov.yml
+
+pre-push:
+  parallel: true
+  commands:
+    unit-tests:
+      run: uv run --extra dev pytest tests/unit/ -x -q
+    type-check:
+      run: uv run --extra dev mypy src/
+    lint:
+      run: uv run --extra dev ruff check .
+
+commit-msg:
+  commands:
+    gitfluff:
+      run: gitfluff lint {1}

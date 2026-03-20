@@ -1,0 +1,5 @@
+soft-fail: false
+framework:
+  - kubernetes
+directory:
+  - k8s/
