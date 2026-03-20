@@ -1,0 +1,52 @@
+pre-commit:
+  parallel: true
+  commands:
+    ruff-format:
+      glob: "*.py"
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+    ruff-check:
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    taplo-format:
+      glob: "*.toml"
+      run: taplo format {staged_files}
+      stage_fixed: true
+    prettier:
+      glob: "*.{json,yaml,yml,md}"
+      run: npx prettier --write {staged_files}
+      stage_fixed: true
+    hadolint:
+      glob: "Dockerfile*"
+      run: hadolint {staged_files}
+    shellcheck:
+      glob: "*.sh"
+      run: shellcheck {staged_files}
+    gitleaks:
+      run: gitleaks protect --staged --no-banner
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: |
+        msg=$(cat "$1")
+        pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s.+'
+        if ! echo "$msg" | grep -qE "$pattern"; then
+          echo "ERROR: Commit message must follow Conventional Commits format:"
+          echo "  <type>(<scope>): <description>"
+          echo "  Types: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert"
+          echo ""
+          echo "  Got: $msg"
+          exit 1
+        fi
+
+pre-push:
+  parallel: true
+  commands:
+    unit-tests:
+      run: uv run pytest tests/unit/ -x -q
+    type-check:
+      run: uv run mypy src/
+    lint:
+      run: uv run ruff check .
