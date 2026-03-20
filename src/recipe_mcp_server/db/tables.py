@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -26,7 +26,7 @@ def _generate_id() -> str:
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
 
 class Base(DeclarativeBase):
@@ -126,9 +126,7 @@ class FavoriteTable(Base):
     __tablename__ = "favorites"
 
     user_id: Mapped[str] = mapped_column(Text, nullable=False)
-    recipe_id: Mapped[str] = mapped_column(
-        Text, ForeignKey("recipes.id"), nullable=False
-    )
+    recipe_id: Mapped[str] = mapped_column(Text, ForeignKey("recipes.id"), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
     rating: Mapped[int | None] = mapped_column(Integer)
     saved_at: Mapped[str] = mapped_column(Text, default=_utc_now)

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from recipe_mcp_server.db.engine import get_session
 from recipe_mcp_server.db.tables import (
@@ -47,13 +48,13 @@ def _json_loads_list(value: str | None) -> list[str]:
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _parse_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
-    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
 
 
 def _recipe_from_row(row: RecipeTable) -> Recipe:
@@ -138,12 +139,34 @@ class RecipeRepo:
                 )
             session.add(row)
             await session.flush()
-            return _recipe_from_row(row)
+            # Build model from known data to avoid lazy-load issues
+            return Recipe(
+                id=row.id,
+                title=data.title,
+                description=data.description,
+                instructions=data.instructions,
+                category=data.category,
+                area=data.area,
+                image_url=data.image_url,
+                source_url=data.source_url,
+                source_api=data.source_api,
+                source_id=data.source_id,
+                prep_time_min=data.prep_time_min,
+                cook_time_min=data.cook_time_min,
+                servings=data.servings,
+                difficulty=data.difficulty,
+                tags=data.tags,
+                created_at=_parse_datetime(row.created_at),
+                updated_at=_parse_datetime(row.updated_at),
+                ingredients=list(data.ingredients),
+            )
 
     async def get(self, recipe_id: str) -> Recipe | None:
         async with get_session(self._factory) as session:
-            stmt = select(RecipeTable).where(
-                RecipeTable.id == recipe_id, RecipeTable.is_deleted == 0
+            stmt = (
+                select(RecipeTable)
+                .options(selectinload(RecipeTable.ingredients))
+                .where(RecipeTable.id == recipe_id, RecipeTable.is_deleted == 0)
             )
             row = (await session.execute(stmt)).scalar_one_or_none()
             if row is None:
@@ -152,8 +175,10 @@ class RecipeRepo:
 
     async def update(self, recipe_id: str, data: RecipeUpdate) -> Recipe | None:
         async with get_session(self._factory) as session:
-            stmt = select(RecipeTable).where(
-                RecipeTable.id == recipe_id, RecipeTable.is_deleted == 0
+            stmt = (
+                select(RecipeTable)
+                .options(selectinload(RecipeTable.ingredients))
+                .where(RecipeTable.id == recipe_id, RecipeTable.is_deleted == 0)
             )
             row = (await session.execute(stmt)).scalar_one_or_none()
             if row is None:
@@ -161,9 +186,7 @@ class RecipeRepo:
 
             update_data = data.model_dump(exclude_unset=True)
             for field, value in update_data.items():
-                if field == "instructions":
-                    setattr(row, field, _json_dumps(value))
-                elif field == "tags":
+                if field == "instructions" or field == "tags":
                     setattr(row, field, _json_dumps(value))
                 elif field == "difficulty":
                     setattr(row, field, value.value if value else None)
@@ -171,7 +194,9 @@ class RecipeRepo:
                     # Replace all ingredients
                     row.ingredients.clear()
                     for i, ing_data in enumerate(value):
-                        ing = ing_data if isinstance(ing_data, Ingredient) else Ingredient(**ing_data)
+                        ing = (
+                            ing_data if isinstance(ing_data, Ingredient) else Ingredient(**ing_data)
+                        )
                         row.ingredients.append(
                             RecipeIngredientTable(
                                 name=ing.name,
@@ -201,7 +226,7 @@ class RecipeRepo:
             await session.flush()
             return True
 
-    async def list(
+    async def list_recipes(
         self, cursor: str | None = None, limit: int = 50
     ) -> PaginatedResponse[RecipeSummary]:
         async with get_session(self._factory) as session:
@@ -271,7 +296,9 @@ class UserRepo:
 
             for field, value in data.items():
                 if field == "dietary_profile":
-                    profile = value if isinstance(value, DietaryProfile) else DietaryProfile(**value)
+                    profile = (
+                        value if isinstance(value, DietaryProfile) else DietaryProfile(**value)
+                    )
                     row.dietary_restrictions = _json_dumps(profile.dietary_restrictions)
                     row.allergies = _json_dumps(profile.allergies)
                     row.preferred_cuisines = _json_dumps(profile.preferred_cuisines)
@@ -295,7 +322,7 @@ class UserRepo:
                 preferred_cuisines=_json_loads_list(row.preferred_cuisines),
             ),
             default_servings=row.default_servings,
-            unit_system=row.unit_system,  # type: ignore[arg-type]
+            unit_system=row.unit_system,
             created_at=_parse_datetime(row.created_at),
             updated_at=_parse_datetime(row.updated_at),
         )
@@ -401,11 +428,25 @@ class MealPlanRepo:
                     )
             session.add(row)
             await session.flush()
-            return self._to_model(row)
+            # Build model from input data to avoid lazy-load issues
+            return MealPlan(
+                id=row.id,
+                user_id=plan.user_id,
+                name=plan.name,
+                start_date=plan.start_date,
+                end_date=plan.end_date,
+                preferences=plan.preferences,
+                days=plan.days,
+                created_at=_parse_datetime(row.created_at),
+            )
 
     async def get(self, plan_id: str) -> MealPlan | None:
         async with get_session(self._factory) as session:
-            stmt = select(MealPlanTable).where(MealPlanTable.id == plan_id)
+            stmt = (
+                select(MealPlanTable)
+                .options(selectinload(MealPlanTable.items))
+                .where(MealPlanTable.id == plan_id)
+            )
             row = (await session.execute(stmt)).scalar_one_or_none()
             if row is None:
                 return None
@@ -415,6 +456,7 @@ class MealPlanRepo:
         async with get_session(self._factory) as session:
             stmt = (
                 select(MealPlanTable)
+                .options(selectinload(MealPlanTable.items))
                 .where(MealPlanTable.user_id == user_id)
                 .order_by(MealPlanTable.created_at.desc())
             )
