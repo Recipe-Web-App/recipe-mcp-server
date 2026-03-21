@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+
+import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -70,3 +73,11 @@ async def meal_plan_repo(session_factory: async_sessionmaker[AsyncSession]) -> M
 @pytest_asyncio.fixture
 async def audit_repo(session_factory: async_sessionmaker[AsyncSession]) -> AuditRepo:
     return AuditRepo(session_factory)
+
+
+@pytest_asyncio.fixture
+async def fake_redis() -> AsyncIterator[fakeredis.aioredis.FakeRedis]:
+    """In-memory Redis client for testing."""
+    client = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    yield client
+    await client.aclose()
