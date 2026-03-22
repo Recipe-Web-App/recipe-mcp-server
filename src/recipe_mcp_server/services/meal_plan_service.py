@@ -42,13 +42,16 @@ def _parse_day_meals(
     items: list[MealPlanItem] = []
     for idx, meal in enumerate(meals_data):
         meal_type = _SLOT_TO_MEAL_TYPE.get(idx, MealType.SNACK)
+        meal_id = meal.get("id")
+        title = meal.get("title")
+        recipe_id = str(meal_id) if meal_id is not None else None
+        custom_meal = title if meal_id is None else None
         items.append(
             MealPlanItem(
-                id=str(uuid.uuid4()),
                 day_date=day_date,
                 meal_type=meal_type,
-                recipe_id=str(meal.get("id", "")),
-                custom_meal=meal.get("title"),
+                recipe_id=recipe_id,
+                custom_meal=custom_meal,
                 servings=1,
             ),
         )

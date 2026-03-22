@@ -10,7 +10,6 @@ from recipe_mcp_server.db.repository import MealPlanRepo, RecipeRepo
 from recipe_mcp_server.exceptions import NotFoundError
 from recipe_mcp_server.models.meal_plan import ShoppingItem
 from recipe_mcp_server.models.recipe import Ingredient
-from recipe_mcp_server.services.conversion_service import ConversionService
 
 logger = structlog.get_logger(__name__)
 
@@ -22,13 +21,11 @@ def _normalize_name(name: str) -> str:
 
 def _aggregate_ingredients(
     items: list[tuple[str, Ingredient]],
-    conversion_service: ConversionService,
 ) -> list[ShoppingItem]:
     """Group ingredients by normalized name and sum compatible quantities.
 
     Args:
         items: List of (recipe_title, ingredient) tuples.
-        conversion_service: Used to attempt unit normalization.
 
     Returns:
         Deduplicated shopping items sorted by ingredient name.
@@ -41,8 +38,8 @@ def _aggregate_ingredients(
 
     result: list[ShoppingItem] = []
     for _key, group in sorted(groups.items()):
-        # Collect all recipe titles contributing to this ingredient
-        recipe_titles = list({title for title, _ing in group})
+        # Collect all recipe titles contributing to this ingredient (sorted for stability)
+        recipe_titles = sorted({title for title, _ing in group})
 
         # Try to sum quantities when units match
         subgroups: dict[str | None, list[tuple[str, Ingredient]]] = defaultdict(list)
@@ -82,11 +79,9 @@ class ShoppingService:
         *,
         recipe_repo: RecipeRepo,
         meal_plan_repo: MealPlanRepo,
-        conversion_service: ConversionService,
     ) -> None:
         self._recipe_repo = recipe_repo
         self._meal_plan_repo = meal_plan_repo
-        self._conversion_service = conversion_service
 
     async def generate_from_recipes(
         self,
@@ -107,7 +102,7 @@ class ShoppingService:
             for ing in recipe.ingredients:
                 items.append((recipe.title, ing))
 
-        return _aggregate_ingredients(items, self._conversion_service)
+        return _aggregate_ingredients(items)
 
     async def generate_from_meal_plan(
         self,

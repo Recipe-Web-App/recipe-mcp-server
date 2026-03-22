@@ -105,10 +105,8 @@ def meal_plan_service(
 def shopping_service(
     mock_recipe_repo: AsyncMock,
     mock_meal_plan_repo: AsyncMock,
-    conversion_service: ConversionService,
 ) -> ShoppingService:
     return ShoppingService(
         recipe_repo=mock_recipe_repo,
         meal_plan_repo=mock_meal_plan_repo,
-        conversion_service=conversion_service,
     )

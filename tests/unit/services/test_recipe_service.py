@@ -255,6 +255,28 @@ class TestScaling:
         scaled = await recipe_service.scale_recipe("r1", 2)
         assert scaled[0].quantity == pytest.approx(100.0)
 
+    async def test_zero_target_servings_raises(
+        self,
+        recipe_service: RecipeService,
+    ) -> None:
+        with pytest.raises(ValueError, match="target_servings must be positive"):
+            await recipe_service.scale_recipe("r1", 0)
+
+    async def test_zero_recipe_servings_raises(
+        self,
+        recipe_service: RecipeService,
+        mock_recipe_repo: AsyncMock,
+    ) -> None:
+        recipe = Recipe(
+            id="r1",
+            title="Test",
+            servings=0,
+            ingredients=[Ingredient(name="a", quantity=1.0, unit="cup")],
+        )
+        mock_recipe_repo.get.return_value = recipe
+        with pytest.raises(ValueError, match="invalid servings"):
+            await recipe_service.scale_recipe("r1", 4)
+
 
 class TestSubstitutes:
     """Ingredient substitution with fallback."""
@@ -313,6 +335,21 @@ class TestRandomRecipe:
             image_url="original.jpg",
         )
         mock_foodish_client.random_image.side_effect = ExternalAPIError("fail")
+
+        result = await recipe_service.random_recipe()
+        assert result.image_url == "original.jpg"
+
+    async def test_foodish_empty_string_uses_recipe_image(
+        self,
+        recipe_service: RecipeService,
+        mock_mealdb_client: AsyncMock,
+        mock_foodish_client: AsyncMock,
+    ) -> None:
+        mock_mealdb_client.random_meal.return_value = Recipe(
+            title="Random",
+            image_url="original.jpg",
+        )
+        mock_foodish_client.random_image.return_value = ""
 
         result = await recipe_service.random_recipe()
         assert result.image_url == "original.jpg"

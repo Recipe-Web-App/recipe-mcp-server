@@ -142,7 +142,7 @@ class RecipeService:
         """
         mealdb_results, spoonacular_results, dummyjson_results = await asyncio.gather(
             self._search_mealdb(query),
-            self._search_spoonacular(query, cuisine=cuisine, diet=diet),
+            self._search_spoonacular(query, cuisine=cuisine, diet=diet, limit=limit),
             self._search_dummyjson(query),
         )
 
@@ -170,12 +170,14 @@ class RecipeService:
         *,
         cuisine: str | None = None,
         diet: str | None = None,
+        limit: int = 10,
     ) -> list[RecipeSummary]:
         try:
             return await self._spoonacular_client.search_recipes(
                 query,
                 cuisine=cuisine or "",
                 diet=diet or "",
+                number=limit,
             )
         except ExternalAPIError:
             logger.warning("spoonacular_search_failed", query=query, exc_info=True)
@@ -197,7 +199,15 @@ class RecipeService:
         target_servings: int,
     ) -> list[ScaledIngredient]:
         """Scale all ingredients in a recipe to *target_servings*."""
+        if target_servings <= 0:
+            msg = f"target_servings must be positive, got {target_servings}"
+            raise ValueError(msg)
+
         recipe = await self.get(recipe_id)
+        if recipe.servings <= 0:
+            msg = f"Recipe '{recipe_id}' has invalid servings value: {recipe.servings}"
+            raise ValueError(msg)
+
         scale_factor = target_servings / recipe.servings
 
         scaled: list[ScaledIngredient] = []
@@ -245,6 +255,8 @@ class RecipeService:
 
         try:
             image_url = await self._foodish_client.random_image()
+            if not image_url:
+                image_url = recipe.image_url or _PLACEHOLDER_IMAGE_URL
         except ExternalAPIError:
             logger.warning("foodish_image_failed", exc_info=True)
             image_url = recipe.image_url or _PLACEHOLDER_IMAGE_URL

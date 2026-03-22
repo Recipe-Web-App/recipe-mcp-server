@@ -127,3 +127,18 @@ class TestAnalyzeRecipe:
         report = await nutrition_service.analyze_recipe("r1")
         assert report.per_serving.calories == pytest.approx(100.0)
         assert report.per_serving.protein_g == pytest.approx(10.0)
+
+    async def test_zero_servings_raises(
+        self,
+        nutrition_service: NutritionService,
+        mock_recipe_repo: AsyncMock,
+    ) -> None:
+        recipe = Recipe(
+            id="r1",
+            title="Test",
+            servings=0,
+            ingredients=[Ingredient(name="a", quantity=1.0, unit="cup")],
+        )
+        mock_recipe_repo.get.return_value = recipe
+        with pytest.raises(ValueError, match="invalid servings"):
+            await nutrition_service.analyze_recipe("r1")

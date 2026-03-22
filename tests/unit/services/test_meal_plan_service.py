@@ -42,6 +42,34 @@ class TestGenerate:
         assert result.days[0].meals[0].meal_type == MealType.BREAKFAST
         assert result.days[0].meals[1].meal_type == MealType.LUNCH
         assert result.days[0].meals[2].meal_type == MealType.DINNER
+        # recipe_id set when Spoonacular provides an id
+        assert result.days[0].meals[0].recipe_id == "1"
+        assert result.days[0].meals[0].custom_meal is None
+
+    async def test_meal_without_id_uses_custom_meal(
+        self,
+        meal_plan_service: MealPlanService,
+        mock_spoonacular_client: AsyncMock,
+        mock_meal_plan_repo: AsyncMock,
+    ) -> None:
+        spoonacular_response = {
+            "meals": [
+                {"title": "Leftovers"},
+            ],
+            "nutrients": {},
+        }
+        mock_spoonacular_client.generate_meal_plan.return_value = spoonacular_response
+        mock_meal_plan_repo.create.side_effect = lambda plan: plan
+
+        result = await meal_plan_service.generate(
+            user_id="u1",
+            name="Custom Plan",
+            time_frame="day",
+        )
+
+        meal = result.days[0].meals[0]
+        assert meal.recipe_id is None
+        assert meal.custom_meal == "Leftovers"
 
     async def test_generates_week_plan(
         self,

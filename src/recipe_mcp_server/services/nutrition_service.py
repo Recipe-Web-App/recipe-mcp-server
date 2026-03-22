@@ -78,13 +78,18 @@ class NutritionService:
         if recipe is None:
             raise NotFoundError(f"Recipe '{recipe_id}' not found")
 
+        servings = recipe.servings
+        if servings <= 0:
+            msg = f"Recipe '{recipe_id}' has invalid servings value: {servings}"
+            raise ValueError(msg)
+
         ingredient_results: list[IngredientNutrition] = []
         for ing in recipe.ingredients:
             nutrition = await self._get_ingredient_nutrition(ing)
             ingredient_results.append(nutrition)
 
         total = _aggregate_nutrients(ingredient_results)
-        per_serving = _divide_nutrients(total, recipe.servings)
+        per_serving = _divide_nutrients(total, servings)
 
         return NutritionReport(
             per_serving=per_serving,
