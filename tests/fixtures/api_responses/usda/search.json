@@ -1,0 +1,19 @@
+{
+  "totalHits": 1,
+  "foods": [
+    {
+      "fdcId": 534358,
+      "description": "Chicken breast, raw",
+      "dataType": "SR Legacy",
+      "foodNutrients": [
+        { "nutrientId": 1008, "nutrientName": "Energy", "value": 120, "unitName": "kcal" },
+        { "nutrientId": 1003, "nutrientName": "Protein", "value": 22.5, "unitName": "g" },
+        { "nutrientId": 1004, "nutrientName": "Total lipid (fat)", "value": 2.62, "unitName": "g" },
+        { "nutrientId": 1005, "nutrientName": "Carbohydrate", "value": 0, "unitName": "g" },
+        { "nutrientId": 1079, "nutrientName": "Fiber, total dietary", "value": 0, "unitName": "g" },
+        { "nutrientId": 2000, "nutrientName": "Sugars, total", "value": 0, "unitName": "g" },
+        { "nutrientId": 1093, "nutrientName": "Sodium, Na", "value": 74, "unitName": "mg" }
+      ]
+    }
+  ]
+}

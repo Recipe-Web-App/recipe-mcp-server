@@ -1,0 +1,11 @@
+{
+  "fdcId": 534358,
+  "description": "Chicken breast, raw",
+  "dataType": "SR Legacy",
+  "foodNutrients": [
+    { "nutrientId": 1008, "nutrientName": "Energy", "value": 120, "unitName": "kcal" },
+    { "nutrientId": 1003, "nutrientName": "Protein", "value": 22.5, "unitName": "g" },
+    { "nutrientId": 1004, "nutrientName": "Total lipid (fat)", "value": 2.62, "unitName": "g" },
+    { "nutrientId": 1005, "nutrientName": "Carbohydrate", "value": 0, "unitName": "g" }
+  ]
+}

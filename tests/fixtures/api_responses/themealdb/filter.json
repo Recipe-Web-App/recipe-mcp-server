@@ -1,0 +1,14 @@
+{
+  "meals": [
+    {
+      "strMeal": "Teriyaki Chicken",
+      "strMealThumb": "https://example.com/t.jpg",
+      "idMeal": "52772"
+    },
+    {
+      "strMeal": "Chicken Soup",
+      "strMealThumb": "https://example.com/s.jpg",
+      "idMeal": "52774"
+    }
+  ]
+}

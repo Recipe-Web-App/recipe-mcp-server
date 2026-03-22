@@ -1,0 +1,7 @@
+{
+  "products": [
+    { "product_name": "Nutella", "brands": "Ferrero", "code": "3017620422003" },
+    { "product_name": "Peanut Butter", "brands": "Skippy", "code": "0048001252325" }
+  ],
+  "count": 2
+}
