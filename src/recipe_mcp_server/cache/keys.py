@@ -69,9 +69,13 @@ def product_key(barcode: str) -> str:
     return f"product:{barcode}"
 
 
-def conversion_key(ingredient: str, source_unit: str, target_unit: str) -> str:
+def conversion_key(
+    ingredient: str, source_unit: str, target_unit: str, source_amount: float = 0.0
+) -> str:
     """Build cache key for unit conversion results."""
-    normalized = f"{ingredient.strip().lower()}:{source_unit.lower()}:{target_unit.lower()}"
+    normalized = (
+        f"{ingredient.strip().lower()}:{source_amount}:{source_unit.lower()}:{target_unit.lower()}"
+    )
     return f"conversion:{normalized}"
 
 

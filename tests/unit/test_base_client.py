@@ -225,7 +225,7 @@ class TestCircuitBreaker:
     def test_ensure_closed_raises_when_open(self) -> None:
         cb = CircuitBreaker(failure_threshold=1, recovery_timeout=999)
         cb.record_failure()
-        with pytest.raises(ServiceUnavailableError, match="Circuit breaker is open"):
+        with pytest.raises(ServiceUnavailableError, match="circuit breaker is open"):
             cb.ensure_closed()
 
     def test_ensure_closed_allows_when_closed(self) -> None:
@@ -244,7 +244,7 @@ async def test_circuit_breaker_blocks_requests(client: ConcreteClient) -> None:
             await client._get("/down")
 
     # Now the circuit should be open — next call fails immediately
-    with pytest.raises(ServiceUnavailableError, match="Circuit breaker is open"):
+    with pytest.raises(ServiceUnavailableError, match="circuit breaker is open"):
         await client._get("/down")
 
 

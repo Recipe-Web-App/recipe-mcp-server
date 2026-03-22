@@ -93,12 +93,12 @@ class CircuitBreaker:
         if self._state is CircuitState.HALF_OPEN or len(self._failures) >= self.failure_threshold:
             self._open(now)
 
-    def ensure_closed(self) -> None:
+    def ensure_closed(self, api_name: str = "") -> None:
         """Raise ``ServiceUnavailableError`` if the circuit is open."""
         if self.state is CircuitState.OPEN:
             raise ServiceUnavailableError(
-                "Circuit breaker is open — upstream service unavailable",
-                api_name="",
+                f"{api_name or 'upstream'}: circuit breaker is open",
+                api_name=api_name,
             )
 
     def _open(self, now: float) -> None:
@@ -251,7 +251,7 @@ class BaseAPIClient(ABC):
         headers: dict[str, str] | None = None,
     ) -> Any:
         """Execute an HTTP request with circuit breaker, retry, and error mapping."""
-        self._circuit.ensure_closed()
+        self._circuit.ensure_closed(api_name=self.api_name)
 
         try:
             response = await self._http.request(
@@ -295,7 +295,12 @@ class BaseAPIClient(ABC):
 
         if status == 429:
             retry_after_header = response.headers.get("Retry-After")
-            retry_after = float(retry_after_header) if retry_after_header else None
+            retry_after: float | None = None
+            if retry_after_header:
+                try:
+                    retry_after = float(retry_after_header)
+                except ValueError:
+                    retry_after = None
             raise RateLimitError(
                 f"{self.api_name}: rate limited (429)",
                 api_name=self.api_name,

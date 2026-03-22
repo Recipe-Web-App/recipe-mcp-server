@@ -79,6 +79,7 @@ class SpoonacularClient(BaseAPIClient):
                 params.get("ingredientName", ""),
                 params.get("sourceUnit", ""),
                 params.get("targetUnit", ""),
+                source_amount=float(params.get("sourceAmount", 0)),
             )
         if "/nutritionWidget.json" in endpoint:
             recipe_id = endpoint.split("/")[2]
@@ -177,7 +178,7 @@ class SpoonacularClient(BaseAPIClient):
 
         cache_key = self._build_cache_key(
             "/recipes/complexSearch",
-            {"query": query, "cuisine": cuisine, "diet": diet},
+            {"query": query, "cuisine": cuisine, "diet": diet, "number": number},
         )
 
         cached = await self._cache_get(cache_key)
@@ -312,7 +313,12 @@ class SpoonacularClient(BaseAPIClient):
         }
         cache_key = self._build_cache_key(
             "/recipes/convert",
-            {"ingredientName": ingredient, "sourceUnit": source_unit, "targetUnit": target_unit},
+            {
+                "ingredientName": ingredient,
+                "sourceAmount": source_amount,
+                "sourceUnit": source_unit,
+                "targetUnit": target_unit,
+            },
         )
 
         cached = await self._cache_get(cache_key)

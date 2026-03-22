@@ -58,7 +58,8 @@ class USDAClient(BaseAPIClient):
         params = params or {}
 
         if endpoint == "/foods/search":
-            return search_key(params.get("query", ""))
+            page_size = params.get("pageSize", 25)
+            return search_key(f"usda:{params.get('query', '')}:ps={page_size}")
         if endpoint.startswith("/food/"):
             fdc_id = endpoint.rsplit("/", maxsplit=1)[-1]
             return nutrition_key(fdc_id)
@@ -114,7 +115,7 @@ class USDAClient(BaseAPIClient):
     async def search_foods(self, query: str, *, page_size: int = 25) -> list[FoodItem]:
         """Search foods by name. Returns an empty list when nothing matches."""
         params = {"query": query, "pageSize": page_size, "api_key": self._api_key}
-        cache_key = self._build_cache_key("/foods/search", {"query": query})
+        cache_key = self._build_cache_key("/foods/search", {"query": query, "pageSize": page_size})
 
         cached = await self._cache_get(cache_key)
         if cached is not None:

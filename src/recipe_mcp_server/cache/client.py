@@ -38,7 +38,7 @@ async def init_redis(settings: Settings) -> redis_async.Redis:
     client: redis_async.Redis = redis_async.from_url(settings.redis_url, **kwargs)
 
     try:
-        await cast("Awaitable[bool]", client.ping())
+        await cast(Awaitable[bool], client.ping())
         logger.info("redis_connected", url=settings.redis_url)
     except redis_async.RedisError as exc:
         await client.aclose()

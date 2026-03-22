@@ -45,7 +45,8 @@ class OpenFoodFactsClient(BaseAPIClient):
             barcode = endpoint.rsplit("/", maxsplit=1)[-1]
             return product_key(barcode)
         if endpoint == "/search":
-            return search_key(params.get("search_terms", ""))
+            page_size = params.get("page_size", 20)
+            return search_key(f"off:{params.get('search_terms', '')}:ps={page_size}")
         return search_key(f"{endpoint}:{json.dumps(params, sort_keys=True)}")
 
     # -- Public API methods ---------------------------------------------------
@@ -76,7 +77,9 @@ class OpenFoodFactsClient(BaseAPIClient):
     ) -> list[dict[str, Any]]:
         """Search products by name. Returns an empty list when nothing matches."""
         params = {"search_terms": query, "page_size": page_size}
-        cache_key = self._build_cache_key("/search", {"search_terms": query})
+        cache_key = self._build_cache_key(
+            "/search", {"search_terms": query, "page_size": page_size}
+        )
 
         cached = await self._cache_get(cache_key)
         if cached is not None:

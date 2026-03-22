@@ -4,6 +4,7 @@ from recipe_mcp_server.cache.client import close_redis, init_redis
 from recipe_mcp_server.cache.decorators import cached
 from recipe_mcp_server.cache.keys import (
     TTL_CATEGORIES,
+    TTL_CONVERSION,
     TTL_CUISINES,
     TTL_FILTER,
     TTL_INGREDIENTS,
@@ -15,6 +16,7 @@ from recipe_mcp_server.cache.keys import (
     TTL_SUBSTITUTES,
     TTL_WINE_PAIRING,
     categories_key,
+    conversion_key,
     cuisines_key,
     ingredients_key,
     nutrition_key,
@@ -29,6 +31,7 @@ from recipe_mcp_server.cache.keys import (
 
 __all__ = [
     "TTL_CATEGORIES",
+    "TTL_CONVERSION",
     "TTL_CUISINES",
     "TTL_FILTER",
     "TTL_INGREDIENTS",
@@ -42,6 +45,7 @@ __all__ = [
     "cached",
     "categories_key",
     "close_redis",
+    "conversion_key",
     "cuisines_key",
     "ingredients_key",
     "init_redis",

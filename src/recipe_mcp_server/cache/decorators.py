@@ -95,7 +95,10 @@ def _serialize(value: Any, response_model: ResponseModelType | None = None) -> s
 def _deserialize(raw: str, response_model: ResponseModelType | None) -> Any:
     """Deserialize a cached JSON string back to the expected type."""
     if response_model is None:
-        return raw
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return raw
     if isinstance(response_model, TypeAdapter):
         return response_model.validate_json(raw)
     return response_model.model_validate_json(raw)

@@ -45,7 +45,9 @@ class DummyJSONClient(BaseAPIClient):
         params = params or {}
 
         if endpoint == "/recipes" and "limit" in params:
-            return search_key(f"dummyjson:list:{params.get('skip', 0)}")
+            skip = params.get("skip", 0)
+            limit = params.get("limit")
+            return search_key(f"dummyjson:list:skip={skip}:limit={limit}")
         if endpoint == "/recipes/search":
             return search_key(f"dummyjson:{params.get('q', '')}")
         if endpoint == "/recipes/tags":
