@@ -7,6 +7,10 @@ class RecipeMCPError(Exception):
     """Base exception for all recipe MCP server errors."""
 
 
+class NotFoundError(RecipeMCPError):
+    """Recipe, food, or meal plan not found."""
+
+
 class CacheError(RecipeMCPError):
     """Non-fatal cache operation error. Log and proceed without cache."""
 
