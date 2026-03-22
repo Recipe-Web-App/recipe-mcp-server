@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 
 import structlog
 from fastmcp import Context, FastMCP
@@ -17,7 +18,7 @@ logger = structlog.get_logger(__name__)
 
 def _get_recipe_service(ctx: Context) -> RecipeService:
     """Extract RecipeService from the lifespan context."""
-    return ctx.lifespan_context["recipe_service"]
+    return cast(RecipeService, ctx.lifespan_context["recipe_service"])
 
 
 def register_recipe_tools(mcp: FastMCP) -> None:
