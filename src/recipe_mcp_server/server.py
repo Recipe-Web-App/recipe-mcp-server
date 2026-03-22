@@ -152,7 +152,7 @@ async def app_lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
 def create_server() -> FastMCP:
     """Create and return a configured FastMCP server instance."""
     settings = get_settings()
-    return FastMCP(
+    server = FastMCP(
         name=settings.server_name,
         version=__version__,
         instructions=(
@@ -161,6 +161,12 @@ def create_server() -> FastMCP:
         ),
         lifespan=app_lifespan,
     )
+
+    from recipe_mcp_server.tools import register_recipe_tools
+
+    register_recipe_tools(server)
+
+    return server
 
 
 mcp = create_server()
