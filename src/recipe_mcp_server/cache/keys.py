@@ -18,6 +18,7 @@ TTL_FILTER: int = 21600  # 6 hours
 TTL_WINE_PAIRING: int = 86400  # 24 hours
 TTL_SUBSTITUTES: int = 604800  # 7 days
 TTL_PRODUCT: int = 604800  # 7 days
+TTL_CONVERSION: int = 2592000  # 30 days
 TTL_SESSION: int = 3600  # 1 hour
 
 
@@ -66,6 +67,12 @@ def substitutes_key(ingredient: str) -> str:
 def product_key(barcode: str) -> str:
     """Build cache key for Open Food Facts product."""
     return f"product:{barcode}"
+
+
+def conversion_key(ingredient: str, source_unit: str, target_unit: str) -> str:
+    """Build cache key for unit conversion results."""
+    normalized = f"{ingredient.strip().lower()}:{source_unit.lower()}:{target_unit.lower()}"
+    return f"conversion:{normalized}"
 
 
 def ratelimit_key(api: str, window: str) -> str:
