@@ -5,6 +5,7 @@ from recipe_mcp_server.cache.decorators import cached
 from recipe_mcp_server.cache.keys import (
     TTL_CATEGORIES,
     TTL_CUISINES,
+    TTL_FILTER,
     TTL_INGREDIENTS,
     TTL_NUTRITION,
     TTL_PRODUCT,
@@ -29,6 +30,7 @@ from recipe_mcp_server.cache.keys import (
 __all__ = [
     "TTL_CATEGORIES",
     "TTL_CUISINES",
+    "TTL_FILTER",
     "TTL_INGREDIENTS",
     "TTL_NUTRITION",
     "TTL_PRODUCT",

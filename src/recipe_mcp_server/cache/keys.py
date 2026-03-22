@@ -14,6 +14,7 @@ TTL_NUTRITION: int = 604800  # 7 days
 TTL_CATEGORIES: int = 86400  # 24 hours
 TTL_CUISINES: int = 86400  # 24 hours
 TTL_INGREDIENTS: int = 604800  # 7 days
+TTL_FILTER: int = 21600  # 6 hours
 TTL_WINE_PAIRING: int = 86400  # 24 hours
 TTL_SUBSTITUTES: int = 604800  # 7 days
 TTL_PRODUCT: int = 604800  # 7 days
