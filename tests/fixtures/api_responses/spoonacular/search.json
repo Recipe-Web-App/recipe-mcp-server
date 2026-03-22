@@ -1,0 +1,7 @@
+{
+  "results": [
+    { "id": 716429, "title": "Pasta with Garlic", "image": "https://example.com/pasta.jpg" },
+    { "id": 715538, "title": "Bruschetta Style Pork", "image": "https://example.com/pork.jpg" }
+  ],
+  "totalResults": 2
+}

@@ -1,0 +1,21 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Classic Margherita Pizza",
+      "ingredients": ["Pizza dough", "Tomato sauce", "Fresh mozzarella"],
+      "instructions": ["Preheat oven to 475F", "Roll out pizza dough", "Add toppings and bake"],
+      "prepTimeMinutes": 20,
+      "cookTimeMinutes": 15,
+      "servings": 4,
+      "difficulty": "Easy",
+      "cuisine": "Italian",
+      "tags": ["Pizza", "Italian"],
+      "image": "https://cdn.dummyjson.com/recipe-images/1.webp",
+      "mealType": ["Dinner"]
+    }
+  ],
+  "total": 1,
+  "skip": 0,
+  "limit": 30
+}

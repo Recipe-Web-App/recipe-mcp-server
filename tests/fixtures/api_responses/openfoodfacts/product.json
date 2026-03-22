@@ -1,0 +1,15 @@
+{
+  "product": {
+    "product_name": "Nutella",
+    "brands": "Ferrero",
+    "nutriscore_grade": "e",
+    "allergens_tags": ["en:milk", "en:nuts", "en:soybeans"],
+    "nutriments": {
+      "energy-kcal_100g": 539,
+      "fat_100g": 30.9,
+      "sugars_100g": 56.3,
+      "proteins_100g": 6.3
+    },
+    "image_url": "https://example.com/nutella.jpg"
+  }
+}

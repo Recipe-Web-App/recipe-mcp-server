@@ -1,0 +1,16 @@
+{
+  "categories": [
+    {
+      "idCategory": "1",
+      "strCategory": "Beef",
+      "strCategoryThumb": "https://example.com/beef.png",
+      "strCategoryDescription": "Beef recipes"
+    },
+    {
+      "idCategory": "2",
+      "strCategory": "Chicken",
+      "strCategoryThumb": "https://example.com/chicken.png",
+      "strCategoryDescription": "Chicken recipes"
+    }
+  ]
+}

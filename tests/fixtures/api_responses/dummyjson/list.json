@@ -1,0 +1,41 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Classic Margherita Pizza",
+      "ingredients": ["Pizza dough", "Tomato sauce", "Fresh mozzarella"],
+      "instructions": ["Preheat oven to 475F", "Roll out pizza dough", "Add toppings and bake"],
+      "prepTimeMinutes": 20,
+      "cookTimeMinutes": 15,
+      "servings": 4,
+      "difficulty": "Easy",
+      "cuisine": "Italian",
+      "caloriesPerServing": 300,
+      "tags": ["Pizza", "Italian"],
+      "image": "https://cdn.dummyjson.com/recipe-images/1.webp",
+      "rating": 4.6,
+      "reviewCount": 98,
+      "mealType": ["Dinner"]
+    },
+    {
+      "id": 2,
+      "name": "Vegetable Stir-Fry",
+      "ingredients": ["Tofu", "Broccoli", "Soy sauce"],
+      "instructions": ["Heat oil in wok", "Add vegetables", "Stir-fry for 5 minutes"],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 15,
+      "servings": 3,
+      "difficulty": "Easy",
+      "cuisine": "Asian",
+      "caloriesPerServing": 200,
+      "tags": ["Vegetarian", "Quick"],
+      "image": "https://cdn.dummyjson.com/recipe-images/2.webp",
+      "rating": 4.3,
+      "reviewCount": 45,
+      "mealType": ["Lunch", "Dinner"]
+    }
+  ],
+  "total": 30,
+  "skip": 0,
+  "limit": 30
+}

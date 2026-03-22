@@ -1,0 +1,16 @@
+{
+  "id": 716429,
+  "title": "Pasta with Garlic, Scallions, Cauliflower & Breadcrumbs",
+  "image": "https://example.com/pasta.jpg",
+  "sourceUrl": "https://example.com/recipe",
+  "readyInMinutes": 45,
+  "preparationMinutes": 15,
+  "cookingMinutes": 30,
+  "servings": 2,
+  "instructions": "Boil the pasta.\nSaute garlic.",
+  "extendedIngredients": [
+    { "name": "garlic", "amount": 3.0, "unit": "cloves" },
+    { "name": "pasta", "amount": 8.0, "unit": "ounces" }
+  ],
+  "dishTypes": ["lunch", "main course"]
+}

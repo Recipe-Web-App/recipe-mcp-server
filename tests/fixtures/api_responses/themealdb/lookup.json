@@ -1,0 +1,20 @@
+{
+  "meals": [
+    {
+      "idMeal": "52772",
+      "strMeal": "Teriyaki Chicken Casserole",
+      "strCategory": "Chicken",
+      "strArea": "Japanese",
+      "strInstructions": "Preheat oven to 350.\nCombine soy sauce and sugar.",
+      "strMealThumb": "https://www.themealdb.com/images/media/meals/wvpsxx1468256321.jpg",
+      "strTags": "Meat,Casserole",
+      "strSource": "https://example.com/teriyaki",
+      "strIngredient1": "soy sauce",
+      "strIngredient2": "water",
+      "strIngredient3": "",
+      "strMeasure1": "3/4 cup",
+      "strMeasure2": "1/2 cup",
+      "strMeasure3": ""
+    }
+  ]
+}
