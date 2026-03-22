@@ -57,7 +57,8 @@ class OpenFoodFactsClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            result: dict[str, Any] = json.loads(cached)
+            return result
 
         data = await self._get(endpoint)
         if not isinstance(data, dict) or "product" not in data:
@@ -79,7 +80,8 @@ class OpenFoodFactsClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_products: list[dict[str, Any]] = json.loads(cached)
+            return cached_products
 
         data = await self._get("/search", params=params)
         products: list[dict[str, Any]] = []

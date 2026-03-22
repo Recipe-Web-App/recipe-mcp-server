@@ -161,7 +161,8 @@ class DummyJSONClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_tags: list[str] = json.loads(cached)
+            return cached_tags
 
         data = await self._get("/recipes/tags")
         tags: list[str] = data if isinstance(data, list) else []

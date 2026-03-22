@@ -251,7 +251,8 @@ class SpoonacularClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_plan: dict[str, Any] = json.loads(cached)
+            return cached_plan
 
         data = await self._get("/mealplanner/generate", params=params)
         if isinstance(data, dict):
@@ -265,7 +266,8 @@ class SpoonacularClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_pairing: dict[str, Any] = json.loads(cached)
+            return cached_pairing
 
         data = await self._get("/food/wine/pairing", params=params)
         if isinstance(data, dict):
@@ -281,7 +283,8 @@ class SpoonacularClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_subs: list[str] = json.loads(cached)
+            return cached_subs
 
         data = await self._get("/food/ingredients/substitutes", params=params)
         substitutes: list[str] = []
@@ -314,7 +317,8 @@ class SpoonacularClient(BaseAPIClient):
 
         cached = await self._cache_get(cache_key)
         if cached is not None:
-            return json.loads(cached)
+            cached_conv: dict[str, Any] = json.loads(cached)
+            return cached_conv
 
         data = await self._get("/recipes/convert", params=params)
         if isinstance(data, dict):

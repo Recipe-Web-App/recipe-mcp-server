@@ -33,12 +33,12 @@ class FoodishClient(BaseAPIClient):
         """Get a random food image URL."""
         data = await self._get("/")
         if isinstance(data, dict):
-            return data.get("image", "")
+            return str(data.get("image", ""))
         return ""
 
     async def random_image_by_category(self, category: str) -> str:
         """Get a random food image URL from a specific category."""
         data = await self._get(f"/images/{category}/")
         if isinstance(data, dict):
-            return data.get("image", "")
+            return str(data.get("image", ""))
         return ""
