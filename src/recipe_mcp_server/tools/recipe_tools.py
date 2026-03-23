@@ -54,16 +54,30 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True),
         tags={"recipe"},
     )
-    async def get_recipe(ctx: Context, recipe_id: str) -> str:
-        """Get a recipe by its ID.
+    async def get_recipe(
+        ctx: Context,
+        recipe_id: str,
+        include_variations: bool = False,
+    ) -> str:
+        """Get a recipe by its ID, optionally with AI-generated variations.
 
         Args:
             recipe_id: The unique recipe identifier.
+            include_variations: If true, include AI-suggested recipe variations
+                via sampling (fusion twist, seasonal adaptation, simplified).
         """
         service = _get_recipe_service(ctx)
         try:
             recipe = await service.get(recipe_id)
-            return recipe.model_dump_json()
+            data = recipe.model_dump()
+
+            if include_variations:
+                from recipe_mcp_server.sampling.handlers import suggest_recipe_variations
+
+                variations_text = await suggest_recipe_variations(ctx, recipe)
+                data["variations"] = variations_text
+
+            return json.dumps(data, default=str)
         except NotFoundError as exc:
             return f"Error: {exc}"
 
