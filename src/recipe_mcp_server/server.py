@@ -162,9 +162,17 @@ def create_server() -> FastMCP:
         lifespan=app_lifespan,
     )
 
-    from recipe_mcp_server.tools import register_recipe_tools
+    from recipe_mcp_server.tools import (
+        register_meal_plan_tools,
+        register_nutrition_tools,
+        register_recipe_tools,
+        register_utility_tools,
+    )
 
     register_recipe_tools(server)
+    register_nutrition_tools(server)
+    register_meal_plan_tools(server)
+    register_utility_tools(server)
 
     return server
 
