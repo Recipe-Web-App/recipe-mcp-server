@@ -163,6 +163,7 @@ def create_server() -> FastMCP:
     )
 
     from recipe_mcp_server.resources import (
+        register_blob_resources,
         register_dynamic_resources,
         register_static_resources,
         register_ui_resources,
@@ -182,6 +183,7 @@ def create_server() -> FastMCP:
     register_static_resources(server)
     register_dynamic_resources(server)
     register_ui_resources(server)
+    register_blob_resources(server)
 
     return server
 
