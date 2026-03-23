@@ -37,7 +37,7 @@ async def suggest_recipe_variations(ctx: Context, recipe: Recipe) -> str:
     logger.info("sampling_recipe_variations", recipe_id=recipe.id, title=recipe.title)
 
     result = await ctx.sample(prompt, max_tokens=MAX_TOKENS_VARIATIONS)
-    return result.text
+    return result.text or ""
 
 
 async def pair_ingredients(ctx: Context, main_ingredient: str, cuisine: str) -> str:
@@ -59,4 +59,4 @@ async def pair_ingredients(ctx: Context, main_ingredient: str, cuisine: str) -> 
     )
 
     result = await ctx.sample(prompt, max_tokens=MAX_TOKENS_PAIRING)
-    return result.text
+    return result.text or ""

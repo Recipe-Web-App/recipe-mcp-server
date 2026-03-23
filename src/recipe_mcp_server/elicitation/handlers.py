@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import structlog
 from fastmcp import Context
 from fastmcp.server.elicitation import AcceptedElicitation
@@ -34,14 +36,14 @@ async def gather_dietary_preferences(ctx: Context) -> DietaryProfile | None:
 
     result = await ctx.elicit(
         "Please provide your dietary preferences to personalize your results.",
-        response_type=DietaryPreferencesForm,
+        response_type=cast(Any, DietaryPreferencesForm),
     )
 
     if not isinstance(result, AcceptedElicitation):
         logger.info("dietary_preferences_declined", action=result.action)
         return None
 
-    form: DietaryPreferencesForm = result.data
+    form = DietaryPreferencesForm(**result.data) if isinstance(result.data, dict) else result.data
     return DietaryProfile(
         dietary_restrictions=_parse_comma_list(form.restrictions),
         allergies=_parse_comma_list(form.allergies),
@@ -65,14 +67,16 @@ async def confirm_serving_size(ctx: Context, target_servings: int) -> int | None
     result = await ctx.elicit(
         f"You requested {target_servings} servings, which is unusually large. "
         "Please confirm the number of servings and provide a reason.",
-        response_type=ServingSizeConfirmation,
+        response_type=cast(Any, ServingSizeConfirmation),
     )
 
     if not isinstance(result, AcceptedElicitation):
         logger.info("serving_confirmation_declined", action=result.action)
         return None
 
-    confirmation: ServingSizeConfirmation = result.data
+    confirmation = (
+        ServingSizeConfirmation(**result.data) if isinstance(result.data, dict) else result.data
+    )
     logger.info(
         "serving_size_confirmed",
         confirmed_servings=confirmation.confirmed_servings,
@@ -96,11 +100,13 @@ async def clarify_available_ingredients(
 
     result = await ctx.elicit(
         "Please clarify the ingredients you have available and your kitchen setup.",
-        response_type=AvailableIngredientsForm,
+        response_type=cast(Any, AvailableIngredientsForm),
     )
 
     if not isinstance(result, AcceptedElicitation):
         logger.info("ingredients_clarification_declined", action=result.action)
         return None
 
+    if isinstance(result.data, dict):
+        return AvailableIngredientsForm(**result.data)
     return result.data
