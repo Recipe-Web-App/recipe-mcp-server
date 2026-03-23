@@ -162,6 +162,13 @@ def create_server() -> FastMCP:
         lifespan=app_lifespan,
     )
 
+    from recipe_mcp_server.prompts import (
+        register_cooking_prompts,
+        register_dietary_prompts,
+        register_meal_plan_prompts,
+        register_recipe_prompts,
+    )
+    from recipe_mcp_server.prompts.completion import register_completion_handler
     from recipe_mcp_server.resources import (
         register_blob_resources,
         register_dynamic_resources,
@@ -184,6 +191,12 @@ def create_server() -> FastMCP:
     register_dynamic_resources(server)
     register_ui_resources(server)
     register_blob_resources(server)
+
+    register_recipe_prompts(server)
+    register_meal_plan_prompts(server)
+    register_dietary_prompts(server)
+    register_cooking_prompts(server)
+    register_completion_handler(server)
 
     return server
 
