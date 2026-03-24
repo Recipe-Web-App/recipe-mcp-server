@@ -22,6 +22,9 @@ EXPECTED_TOOLS = {
     "generate_shopping_list",
     "convert_units",
     "get_wine_pairing",
+    "get_holiday_recipes",
+    "nutrition_lookup_food_nutrition",
+    "nutrition_analyze_food_nutrition",
 }
 
 EXPECTED_STATIC_RESOURCE_URIS = {
@@ -40,6 +43,7 @@ EXPECTED_RESOURCE_TEMPLATES = {
     "nutrition://label/{food_name}",
     "recipe://photo/{recipe_id}",
     "nutrition://chart/{food_name}",
+    "nutrition://nutrition/composed/{food_name}",
 }
 
 EXPECTED_PROMPTS = {

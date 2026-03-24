@@ -23,6 +23,7 @@ version = "0.1.0"
 
 [project.optional-dependencies]
 dev = [
+  "fastmcp[tasks]>=3.1.1",
   "pytest>=9.0",
   "pytest-asyncio>=1.3",
   "pytest-cov>=7.0",
@@ -35,6 +36,7 @@ dev = [
   "bandit>=1.9",
   "locust>=2.43",
 ]
+tasks = ["fastmcp[tasks]>=3.1.1"]
 
 [build-system]
 build-backend = "hatchling.build"

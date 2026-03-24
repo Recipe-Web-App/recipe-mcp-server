@@ -166,6 +166,7 @@ def create_server() -> FastMCP:
             "nutrition analysis, and meal planning."
         ),
         lifespan=app_lifespan,
+        list_page_size=50,
     )
 
     from recipe_mcp_server.prompts import (
@@ -185,6 +186,7 @@ def create_server() -> FastMCP:
         register_meal_plan_tools,
         register_nutrition_tools,
         register_recipe_tools,
+        register_seasonal_tools,
         register_utility_tools,
     )
 
@@ -192,6 +194,7 @@ def create_server() -> FastMCP:
     register_nutrition_tools(server)
     register_meal_plan_tools(server)
     register_utility_tools(server)
+    register_seasonal_tools(server)
 
     register_static_resources(server)
     register_dynamic_resources(server)
@@ -203,6 +206,11 @@ def create_server() -> FastMCP:
     register_dietary_prompts(server)
     register_cooking_prompts(server)
     register_completion_handler(server)
+
+    # Mount nutrition sub-server for composition demonstration
+    from recipe_mcp_server.composition import nutrition_mcp
+
+    server.mount(nutrition_mcp, namespace="nutrition")
 
     return server
 

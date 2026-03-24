@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 
 import structlog
 
@@ -23,6 +24,8 @@ from recipe_mcp_server.models.recipe import (
 from recipe_mcp_server.models.user import Favorite
 
 logger = structlog.get_logger(__name__)
+
+ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 
 _PLACEHOLDER_IMAGE_URL = "https://via.placeholder.com/600x400?text=Recipe"
 
@@ -134,17 +137,41 @@ class RecipeService:
         cuisine: str | None = None,
         diet: str | None = None,
         limit: int = 10,
+        on_progress: ProgressCallback | None = None,
     ) -> list[RecipeSummary]:
         """Search across TheMealDB, Spoonacular, DummyJSON, and local DB.
 
         Individual API failures are caught and logged; remaining sources
         still contribute results. Results are deduplicated by title.
+
+        When *on_progress* is provided, APIs are called sequentially so
+        progress can be reported after each one. Otherwise, they are
+        called in parallel for speed.
         """
-        mealdb_results, spoonacular_results, dummyjson_results = await asyncio.gather(
-            self._search_mealdb(query),
-            self._search_spoonacular(query, cuisine=cuisine, diet=diet, limit=limit),
-            self._search_dummyjson(query),
-        )
+
+        async def _spoon() -> list[RecipeSummary]:
+            return await self._search_spoonacular(query, cuisine=cuisine, diet=diet, limit=limit)
+
+        api_searches: list[tuple[str, Callable[[], Awaitable[list[RecipeSummary]]]]] = [
+            ("TheMealDB", lambda: self._search_mealdb(query)),
+            ("Spoonacular", _spoon),
+            ("DummyJSON", lambda: self._search_dummyjson(query)),
+        ]
+
+        if on_progress is not None:
+            all_results: list[RecipeSummary] = []
+            total = len(api_searches)
+            for i, (name, search_fn) in enumerate(api_searches):
+                await on_progress(i, total, f"Searching {name}...")
+                all_results.extend(await search_fn())
+            await on_progress(total, total, "Merging results...")
+        else:
+            mealdb_results, spoonacular_results, dummyjson_results = await asyncio.gather(
+                self._search_mealdb(query),
+                self._search_spoonacular(query, cuisine=cuisine, diet=diet, limit=limit),
+                self._search_dummyjson(query),
+            )
+            all_results = mealdb_results + spoonacular_results + dummyjson_results
 
         local_results = await self._recipe_repo.search(
             query,
@@ -152,7 +179,7 @@ class RecipeService:
             limit=limit,
         )
 
-        merged = mealdb_results + spoonacular_results + dummyjson_results + local_results
+        merged = all_results + local_results
         unique = _deduplicate(merged)
         return unique[:limit]
 

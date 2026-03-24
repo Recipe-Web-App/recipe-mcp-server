@@ -26,6 +26,20 @@ def _get_spoonacular_client(ctx: Context) -> SpoonacularClient:
     return cast(SpoonacularClient, ctx.lifespan_context["spoonacular_client"])
 
 
+_METRIC_UNITS = {"ml", "l", "g", "kg", "celsius", "c"}
+_IMPERIAL_UNITS = {"cups", "oz", "lb", "lbs", "tsp", "tbsp", "fahrenheit", "f", "fl oz"}
+
+
+def _infer_unit_system(unit: str) -> str | None:
+    """Infer metric/imperial from a unit string, or None if ambiguous."""
+    normalized = unit.strip().lower()
+    if normalized in _METRIC_UNITS:
+        return "metric"
+    if normalized in _IMPERIAL_UNITS:
+        return "imperial"
+    return None
+
+
 def register_utility_tools(mcp: FastMCP) -> None:
     """Register all utility tools on the given FastMCP server."""
 
@@ -51,14 +65,24 @@ def register_utility_tools(mcp: FastMCP) -> None:
             to_unit: Target unit (e.g. "ml", "oz", "celsius").
             ingredient: Required for volume-to-weight conversions (e.g. "flour").
         """
+        await ctx.info(
+            f"Converting units: {value} {from_unit} -> {to_unit}, ingredient={ingredient}"
+        )
         service = _get_conversion_service(ctx)
         try:
             if ingredient is not None:
+                await ctx.debug(
+                    f"Using API fallback for ingredient-based conversion: '{ingredient}'"
+                )
                 result = await service.convert_with_api_fallback(
                     value, from_unit, to_unit, ingredient=ingredient
                 )
             else:
                 result = service.convert(value, from_unit, to_unit)
+            await ctx.debug(f"Conversion result: {value} {from_unit} = {result} {to_unit}")
+            unit_system = _infer_unit_system(to_unit)
+            if unit_system:
+                await ctx.set_state("unit_system", unit_system)
             return json.dumps(
                 {
                     "result": result,
@@ -67,6 +91,7 @@ def register_utility_tools(mcp: FastMCP) -> None:
                 }
             )
         except ValueError as exc:
+            await ctx.error(f"Conversion failed: {exc}")
             return f"Error: {exc}"
 
     @mcp.tool(
@@ -79,9 +104,12 @@ def register_utility_tools(mcp: FastMCP) -> None:
         Args:
             food: The food to pair with wine (e.g. "salmon", "pasta").
         """
+        await ctx.info(f"Getting wine pairing for: '{food}'")
         client = _get_spoonacular_client(ctx)
         try:
             pairing = await client.get_wine_pairing(food)
+            await ctx.debug(f"Wine pairing found for '{food}'")
             return json.dumps(pairing)
         except ExternalAPIError as exc:
+            await ctx.error(f"Wine pairing API failed for '{food}': {exc}")
             return f"Error getting wine pairing: {exc}"
