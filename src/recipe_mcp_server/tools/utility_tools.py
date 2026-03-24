@@ -51,14 +51,21 @@ def register_utility_tools(mcp: FastMCP) -> None:
             to_unit: Target unit (e.g. "ml", "oz", "celsius").
             ingredient: Required for volume-to-weight conversions (e.g. "flour").
         """
+        await ctx.info(
+            f"Converting units: {value} {from_unit} -> {to_unit}, ingredient={ingredient}"
+        )
         service = _get_conversion_service(ctx)
         try:
             if ingredient is not None:
+                await ctx.debug(
+                    f"Using API fallback for ingredient-based conversion: '{ingredient}'"
+                )
                 result = await service.convert_with_api_fallback(
                     value, from_unit, to_unit, ingredient=ingredient
                 )
             else:
                 result = service.convert(value, from_unit, to_unit)
+            await ctx.debug(f"Conversion result: {value} {from_unit} = {result} {to_unit}")
             return json.dumps(
                 {
                     "result": result,
@@ -67,6 +74,7 @@ def register_utility_tools(mcp: FastMCP) -> None:
                 }
             )
         except ValueError as exc:
+            await ctx.error(f"Conversion failed: {exc}")
             return f"Error: {exc}"
 
     @mcp.tool(
@@ -79,9 +87,12 @@ def register_utility_tools(mcp: FastMCP) -> None:
         Args:
             food: The food to pair with wine (e.g. "salmon", "pasta").
         """
+        await ctx.info(f"Getting wine pairing for: '{food}'")
         client = _get_spoonacular_client(ctx)
         try:
             pairing = await client.get_wine_pairing(food)
+            await ctx.debug(f"Wine pairing found for '{food}'")
             return json.dumps(pairing)
         except ExternalAPIError as exc:
+            await ctx.error(f"Wine pairing API failed for '{food}': {exc}")
             return f"Error getting wine pairing: {exc}"

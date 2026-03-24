@@ -32,13 +32,17 @@ def register_nutrition_tools(mcp: FastMCP) -> None:
         Args:
             food_name: The food to look up (e.g. "chicken breast", "apple").
         """
+        await ctx.info(f"Looking up nutrition for: '{food_name}'")
         service = _get_nutrition_service(ctx)
         try:
             info = await service.lookup(food_name)
+            await ctx.debug(f"Nutrition lookup complete for '{food_name}'")
             return info.model_dump_json()
         except NotFoundError as exc:
+            await ctx.warning(f"Nutrition data not found for '{food_name}'")
             return f"Error: {exc}"
         except ExternalAPIError as exc:
+            await ctx.error(f"Nutrition API failed for '{food_name}': {exc}")
             return f"Error looking up nutrition: {exc}"
 
     @mcp.tool(
@@ -51,11 +55,15 @@ def register_nutrition_tools(mcp: FastMCP) -> None:
         Args:
             recipe_id: The recipe to analyze.
         """
+        await ctx.info(f"Analyzing nutrition for recipe: '{recipe_id}'")
         service = _get_nutrition_service(ctx)
         try:
             report = await service.analyze_recipe(recipe_id)
+            await ctx.debug(f"Nutrition analysis complete for recipe '{recipe_id}'")
             return report.model_dump_json()
         except NotFoundError as exc:
+            await ctx.warning(f"Recipe not found for nutrition analysis: '{recipe_id}'")
             return f"Error: {exc}"
         except ExternalAPIError as exc:
+            await ctx.error(f"Nutrition API failed for recipe '{recipe_id}': {exc}")
             return f"Error analyzing recipe nutrition: {exc}"

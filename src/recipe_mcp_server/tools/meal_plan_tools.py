@@ -46,6 +46,10 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
             target_calories: Daily calorie target (default 2000).
             diet: Optional dietary restriction (e.g. "vegetarian", "keto").
         """
+        await ctx.info(
+            f"Generating meal plan: user='{user_id}', name='{name}', "
+            f"time_frame='{time_frame}', calories={target_calories}"
+        )
         service = _get_meal_plan_service(ctx)
         try:
             plan = await service.generate(
@@ -55,8 +59,10 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
                 target_calories=target_calories,
                 diet=diet,
             )
+            await ctx.debug(f"Generated meal plan '{plan.id}' with {len(plan.days)} days")
             return plan.model_dump_json()
         except ExternalAPIError as exc:
+            await ctx.error(f"Meal plan API failed: {exc}")
             return f"Error generating meal plan: {exc}"
 
     @mcp.tool(tags={"planning"})
@@ -76,23 +82,34 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
         if recipe_ids_json is None and meal_plan_id is None:
             return "Error: Provide at least one of recipe_ids_json or meal_plan_id"
 
+        await ctx.info(
+            f"Generating shopping list: meal_plan_id={meal_plan_id}, "
+            f"recipe_ids_json={'provided' if recipe_ids_json else 'none'}"
+        )
         service = _get_shopping_service(ctx)
 
         if meal_plan_id is not None:
             try:
                 items = await service.generate_from_meal_plan(meal_plan_id)
+                await ctx.debug(f"Generated shopping list with {len(items)} items from meal plan")
                 return json.dumps([item.model_dump() for item in items], default=str)
             except NotFoundError as exc:
+                await ctx.warning(f"Meal plan not found: '{meal_plan_id}'")
                 return f"Error: {exc}"
 
         assert recipe_ids_json is not None  # guaranteed by guard above
         try:
             recipe_ids: list[str] = json.loads(recipe_ids_json)
         except (json.JSONDecodeError, TypeError) as exc:
+            await ctx.error(f"Invalid recipe_ids_json format: {exc}")
             return f"Error: Invalid recipe_ids_json format: {exc}"
 
         try:
             items = await service.generate_from_recipes(recipe_ids)
+            await ctx.debug(
+                f"Generated shopping list with {len(items)} items from {len(recipe_ids)} recipes"
+            )
             return json.dumps([item.model_dump() for item in items], default=str)
         except NotFoundError as exc:
+            await ctx.warning(f"One or more recipes not found: {exc}")
             return f"Error: {exc}"

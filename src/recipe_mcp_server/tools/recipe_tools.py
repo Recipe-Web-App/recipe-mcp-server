@@ -43,11 +43,16 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             diet: Optional dietary filter (e.g. "vegetarian").
             limit: Maximum number of results (default 10).
         """
+        await ctx.info(
+            f"Searching recipes: query='{query}', cuisine={cuisine}, diet={diet}, limit={limit}"
+        )
         service = _get_recipe_service(ctx)
         try:
             results = await service.search(query, cuisine=cuisine, diet=diet, limit=limit)
+            await ctx.debug(f"Found {len(results)} results for query='{query}'")
             return json.dumps([r.model_dump() for r in results], default=str)
         except ExternalAPIError as exc:
+            await ctx.error(f"All recipe APIs failed for query='{query}': {exc}")
             return f"Error searching recipes: {exc}"
 
     @mcp.tool(
@@ -66,12 +71,14 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             include_variations: If true, include AI-suggested recipe variations
                 via sampling (fusion twist, seasonal adaptation, simplified).
         """
+        await ctx.info(f"Getting recipe: id='{recipe_id}', include_variations={include_variations}")
         service = _get_recipe_service(ctx)
         try:
             recipe = await service.get(recipe_id)
             data = recipe.model_dump()
 
             if include_variations:
+                await ctx.debug(f"Requesting AI-generated variations for recipe '{recipe_id}'")
                 from recipe_mcp_server.sampling.handlers import suggest_recipe_variations
 
                 variations_text = await suggest_recipe_variations(ctx, recipe)
@@ -79,6 +86,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
 
             return json.dumps(data, default=str)
         except NotFoundError as exc:
+            await ctx.warning(f"Recipe not found: '{recipe_id}'")
             return f"Error: {exc}"
 
     @mcp.tool(tags={"recipe"})
@@ -113,6 +121,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             tags: Optional list of tags.
             ingredients_json: JSON array of ingredients, each with name, quantity, unit, notes.
         """
+        await ctx.info(f"Creating recipe: title='{title}'")
         service = _get_recipe_service(ctx)
 
         ingredients: list[Ingredient] = []
@@ -121,6 +130,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
                 raw = json.loads(ingredients_json)
                 ingredients = [Ingredient(**item) for item in raw]
             except (json.JSONDecodeError, TypeError) as exc:
+                await ctx.error(f"Invalid ingredients_json format: {exc}")
                 return f"Error: Invalid ingredients_json format: {exc}"
 
         data = RecipeCreate(
@@ -138,6 +148,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             ingredients=ingredients,
         )
         recipe = await service.create(data)
+        await ctx.debug(f"Created recipe with id='{recipe.id}'")
         return recipe.model_dump_json()
 
     @mcp.tool(
@@ -177,6 +188,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             tags: New tags list.
             ingredients_json: JSON array of updated ingredients.
         """
+        await ctx.info(f"Updating recipe: id='{recipe_id}'")
         service = _get_recipe_service(ctx)
 
         ingredients: list[Ingredient] | None = None
@@ -185,6 +197,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
                 raw = json.loads(ingredients_json)
                 ingredients = [Ingredient(**item) for item in raw]
             except (json.JSONDecodeError, TypeError) as exc:
+                await ctx.error(f"Invalid ingredients_json format: {exc}")
                 return f"Error: Invalid ingredients_json format: {exc}"
 
         data = RecipeUpdate(
@@ -203,8 +216,10 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         )
         try:
             recipe = await service.update(recipe_id, data)
+            await ctx.debug(f"Updated recipe '{recipe_id}'")
             return recipe.model_dump_json()
         except NotFoundError as exc:
+            await ctx.warning(f"Recipe not found for update: '{recipe_id}'")
             return f"Error: {exc}"
 
     @mcp.tool(
@@ -217,10 +232,13 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         Args:
             recipe_id: The recipe to delete.
         """
+        await ctx.info(f"Deleting recipe: id='{recipe_id}'")
         service = _get_recipe_service(ctx)
         deleted = await service.delete(recipe_id)
         if not deleted:
+            await ctx.warning(f"Recipe not found for deletion: '{recipe_id}'")
             return f"Error: Recipe '{recipe_id}' not found"
+        await ctx.debug(f"Deleted recipe '{recipe_id}'")
         return json.dumps({"deleted": True, "recipe_id": recipe_id})
 
     @mcp.tool(tags={"recipe", "utility"})
@@ -235,13 +253,17 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             recipe_id: The recipe to scale.
             target_servings: Desired number of servings.
         """
+        await ctx.info(f"Scaling recipe: id='{recipe_id}', target_servings={target_servings}")
         service = _get_recipe_service(ctx)
         try:
             scaled = await service.scale_recipe(recipe_id, target_servings)
+            await ctx.debug(f"Scaled {len(scaled)} ingredients for recipe '{recipe_id}'")
             return json.dumps([s.model_dump() for s in scaled], default=str)
         except NotFoundError as exc:
+            await ctx.warning(f"Recipe not found for scaling: '{recipe_id}'")
             return f"Error: {exc}"
         except ValueError as exc:
+            await ctx.error(f"Scaling error: {exc}")
             return f"Error: {exc}"
 
     @mcp.tool(
@@ -254,11 +276,14 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         Args:
             ingredient: The ingredient to find substitutes for (e.g. "butter").
         """
+        await ctx.info(f"Finding substitutes for: '{ingredient}'")
         service = _get_recipe_service(ctx)
         try:
             subs = await service.get_substitutes(ingredient)
+            await ctx.debug(f"Found {len(subs)} substitutes for '{ingredient}'")
             return json.dumps(subs)
         except ExternalAPIError as exc:
+            await ctx.error(f"Failed to find substitutes for '{ingredient}': {exc}")
             return f"Error finding substitutes: {exc}"
 
     @mcp.tool(
@@ -280,8 +305,10 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             rating: Optional rating from 1 to 5.
             notes: Optional notes about the recipe.
         """
+        await ctx.info(f"Saving favorite: user='{user_id}', recipe='{recipe_id}'")
         service = _get_recipe_service(ctx)
         favorite = await service.save_favorite(user_id, recipe_id, rating=rating, notes=notes)
+        await ctx.debug(f"Saved favorite for user '{user_id}', recipe '{recipe_id}'")
         return favorite.model_dump_json()
 
     @mcp.tool(
@@ -290,11 +317,14 @@ def register_recipe_tools(mcp: FastMCP) -> None:
     )
     async def get_random_recipe(ctx: Context) -> str:
         """Get a random recipe for inspiration."""
+        await ctx.info("Getting random recipe")
         service = _get_recipe_service(ctx)
         try:
             recipe = await service.random_recipe()
+            await ctx.debug(f"Random recipe selected: '{recipe.title}'")
             return recipe.model_dump_json()
         except (NotFoundError, ExternalAPIError) as exc:
+            await ctx.error(f"Failed to get random recipe: {exc}")
             return f"Error getting random recipe: {exc}"
 
     @mcp.tool(
@@ -307,6 +337,8 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         Args:
             user_id: The user whose favorites to list.
         """
+        await ctx.info(f"Listing favorites for user: '{user_id}'")
         service = _get_recipe_service(ctx)
         favorites = await service.list_favorites(user_id)
+        await ctx.debug(f"Found {len(favorites)} favorites for user '{user_id}'")
         return json.dumps([f.model_dump() for f in favorites], default=str)
