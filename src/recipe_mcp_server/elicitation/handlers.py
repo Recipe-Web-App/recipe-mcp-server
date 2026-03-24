@@ -44,12 +44,17 @@ async def gather_dietary_preferences(ctx: Context) -> DietaryProfile | None:
         return None
 
     form = DietaryPreferencesForm(**result.data) if isinstance(result.data, dict) else result.data
-    return DietaryProfile(
+    profile = DietaryProfile(
         dietary_restrictions=_parse_comma_list(form.restrictions),
         allergies=_parse_comma_list(form.allergies),
         preferred_cuisines=_parse_comma_list(form.preferred_cuisines),
         calorie_target=form.calorie_target if form.calorie_target > 0 else None,
     )
+
+    await ctx.set_state("user_preferences", profile.model_dump())
+    await ctx.disable_components(names=["gather_dietary_preferences"])
+
+    return profile
 
 
 async def confirm_serving_size(ctx: Context, target_servings: int) -> int | None:

@@ -26,6 +26,20 @@ def _get_spoonacular_client(ctx: Context) -> SpoonacularClient:
     return cast(SpoonacularClient, ctx.lifespan_context["spoonacular_client"])
 
 
+_METRIC_UNITS = {"ml", "l", "g", "kg", "celsius", "c"}
+_IMPERIAL_UNITS = {"cups", "oz", "lb", "lbs", "tsp", "tbsp", "fahrenheit", "f", "fl oz"}
+
+
+def _infer_unit_system(unit: str) -> str | None:
+    """Infer metric/imperial from a unit string, or None if ambiguous."""
+    normalized = unit.strip().lower()
+    if normalized in _METRIC_UNITS:
+        return "metric"
+    if normalized in _IMPERIAL_UNITS:
+        return "imperial"
+    return None
+
+
 def register_utility_tools(mcp: FastMCP) -> None:
     """Register all utility tools on the given FastMCP server."""
 
@@ -66,6 +80,9 @@ def register_utility_tools(mcp: FastMCP) -> None:
             else:
                 result = service.convert(value, from_unit, to_unit)
             await ctx.debug(f"Conversion result: {value} {from_unit} = {result} {to_unit}")
+            unit_system = _infer_unit_system(to_unit)
+            if unit_system:
+                await ctx.set_state("unit_system", unit_system)
             return json.dumps(
                 {
                     "result": result,

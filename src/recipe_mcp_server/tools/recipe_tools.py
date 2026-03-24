@@ -56,6 +56,10 @@ def register_recipe_tools(mcp: FastMCP) -> None:
                 on_progress=lambda c, t, m: ctx.report_progress(c, t, m),
             )
             await ctx.debug(f"Found {len(results)} results for query='{query}'")
+            await ctx.set_state(
+                "last_search",
+                {"query": query, "result_ids": [r.id for r in results]},
+            )
             return json.dumps([r.model_dump() for r in results], default=str)
         except ExternalAPIError as exc:
             await ctx.error(f"All recipe APIs failed for query='{query}': {exc}")

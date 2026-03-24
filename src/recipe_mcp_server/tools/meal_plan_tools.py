@@ -50,6 +50,14 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
             f"Generating meal plan: user='{user_id}', name='{name}', "
             f"time_frame='{time_frame}', calories={target_calories}"
         )
+
+        # Use stored dietary preferences if diet not explicitly provided
+        if not diet:
+            prefs = await ctx.get_state("user_preferences")
+            if isinstance(prefs, dict) and prefs.get("dietary_restrictions"):
+                diet = ", ".join(prefs["dietary_restrictions"])
+                await ctx.debug(f"Using stored dietary preferences: {diet}")
+
         service = _get_meal_plan_service(ctx)
         try:
             plan = await service.generate(
