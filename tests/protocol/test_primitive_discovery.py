@@ -22,6 +22,7 @@ EXPECTED_TOOLS = {
     "generate_shopping_list",
     "convert_units",
     "get_wine_pairing",
+    "get_holiday_recipes",
 }
 
 EXPECTED_STATIC_RESOURCE_URIS = {

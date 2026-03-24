@@ -185,6 +185,7 @@ def create_server() -> FastMCP:
         register_meal_plan_tools,
         register_nutrition_tools,
         register_recipe_tools,
+        register_seasonal_tools,
         register_utility_tools,
     )
 
@@ -192,6 +193,7 @@ def create_server() -> FastMCP:
     register_nutrition_tools(server)
     register_meal_plan_tools(server)
     register_utility_tools(server)
+    register_seasonal_tools(server)
 
     register_static_resources(server)
     register_dynamic_resources(server)
