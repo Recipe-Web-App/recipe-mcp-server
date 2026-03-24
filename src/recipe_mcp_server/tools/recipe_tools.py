@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 from typing import cast
@@ -95,6 +96,9 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             if next_cursor:
                 response["next_cursor"] = next_cursor
             return json.dumps(response, default=str)
+        except asyncio.CancelledError:
+            await ctx.warning("Search cancelled, returning partial results")
+            return json.dumps({"results": [], "cancelled": True})
         except ExternalAPIError as exc:
             await ctx.error(f"All recipe APIs failed for query='{query}': {exc}")
             return f"Error searching recipes: {exc}"

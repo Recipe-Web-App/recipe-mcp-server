@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import cast
 
@@ -70,6 +71,9 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
             )
             await ctx.debug(f"Generated meal plan '{plan.id}' with {len(plan.days)} days")
             return plan.model_dump_json()
+        except asyncio.CancelledError:
+            await ctx.warning("Meal plan generation cancelled")
+            return json.dumps({"cancelled": True, "partial_plan": None})
         except ExternalAPIError as exc:
             await ctx.error(f"Meal plan API failed: {exc}")
             return f"Error generating meal plan: {exc}"
