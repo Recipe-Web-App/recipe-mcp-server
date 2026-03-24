@@ -207,6 +207,11 @@ def create_server() -> FastMCP:
     register_cooking_prompts(server)
     register_completion_handler(server)
 
+    # Mount nutrition sub-server for composition demonstration
+    from recipe_mcp_server.composition import nutrition_mcp
+
+    server.mount(nutrition_mcp, namespace="nutrition")
+
     return server
 
 
