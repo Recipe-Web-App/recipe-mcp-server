@@ -8,6 +8,7 @@ import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from recipe_mcp_server.config import Settings
 from recipe_mcp_server.db.repository import (
@@ -36,8 +37,17 @@ def test_settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
 
 @pytest_asyncio.fixture
 async def engine():
-    """In-memory SQLite engine with all tables created."""
-    eng = create_async_engine("sqlite+aiosqlite:///:memory:")
+    """In-memory SQLite engine with all tables created.
+
+    Uses NullPool to avoid aiosqlite background-thread warnings:
+    connections are closed immediately on return, so no idle threads
+    race against pytest-asyncio's event-loop teardown.
+    """
+    eng = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield eng
