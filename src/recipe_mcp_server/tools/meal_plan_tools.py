@@ -58,6 +58,7 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
                 time_frame=time_frame,
                 target_calories=target_calories,
                 diet=diet,
+                on_progress=lambda c, t, m: ctx.report_progress(c, t, m),
             )
             await ctx.debug(f"Generated meal plan '{plan.id}' with {len(plan.days)} days")
             return plan.model_dump_json()

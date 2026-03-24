@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
+
 import structlog
 
 from recipe_mcp_server.clients.spoonacular import SpoonacularClient
@@ -16,6 +18,8 @@ from recipe_mcp_server.models.nutrition import (
 from recipe_mcp_server.models.recipe import Ingredient
 
 logger = structlog.get_logger(__name__)
+
+ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 
 
 def _aggregate_nutrients(items: list[IngredientNutrition]) -> NutrientInfo:
@@ -72,7 +76,11 @@ class NutritionService:
             raise NotFoundError(f"No nutrition data found for '{food_name}'")
         return results[0].nutrients
 
-    async def analyze_recipe(self, recipe_id: str) -> NutritionReport:
+    async def analyze_recipe(
+        self,
+        recipe_id: str,
+        on_progress: ProgressCallback | None = None,
+    ) -> NutritionReport:
         """Compute per-serving and total nutrition for a recipe."""
         recipe = await self._recipe_repo.get(recipe_id)
         if recipe is None:
@@ -83,10 +91,23 @@ class NutritionService:
             msg = f"Recipe '{recipe_id}' has invalid servings value: {servings}"
             raise ValueError(msg)
 
+        total_ingredients = len(recipe.ingredients)
         ingredient_results: list[IngredientNutrition] = []
-        for ing in recipe.ingredients:
+        for i, ing in enumerate(recipe.ingredients):
+            if on_progress:
+                await on_progress(
+                    i,
+                    total_ingredients,
+                    f"Looking up {ing.name}...",
+                )
             nutrition = await self._get_ingredient_nutrition(ing)
             ingredient_results.append(nutrition)
+        if on_progress:
+            await on_progress(
+                total_ingredients,
+                total_ingredients,
+                "Calculating totals...",
+            )
 
         total = _aggregate_nutrients(ingredient_results)
         per_serving = _divide_nutrients(total, servings)

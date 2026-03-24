@@ -48,7 +48,13 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         )
         service = _get_recipe_service(ctx)
         try:
-            results = await service.search(query, cuisine=cuisine, diet=diet, limit=limit)
+            results = await service.search(
+                query,
+                cuisine=cuisine,
+                diet=diet,
+                limit=limit,
+                on_progress=lambda c, t, m: ctx.report_progress(c, t, m),
+            )
             await ctx.debug(f"Found {len(results)} results for query='{query}'")
             return json.dumps([r.model_dump() for r in results], default=str)
         except ExternalAPIError as exc:

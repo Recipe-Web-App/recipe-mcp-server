@@ -58,7 +58,10 @@ def register_nutrition_tools(mcp: FastMCP) -> None:
         await ctx.info(f"Analyzing nutrition for recipe: '{recipe_id}'")
         service = _get_nutrition_service(ctx)
         try:
-            report = await service.analyze_recipe(recipe_id)
+            report = await service.analyze_recipe(
+                recipe_id,
+                on_progress=lambda c, t, m: ctx.report_progress(c, t, m),
+            )
             await ctx.debug(f"Nutrition analysis complete for recipe '{recipe_id}'")
             return report.model_dump_json()
         except NotFoundError as exc:

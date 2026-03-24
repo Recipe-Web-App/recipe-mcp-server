@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import date, timedelta
 from typing import Any
 
@@ -14,6 +15,8 @@ from recipe_mcp_server.models.common import MealType
 from recipe_mcp_server.models.meal_plan import DayPlan, MealPlan, MealPlanItem
 
 logger = structlog.get_logger(__name__)
+
+ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 
 # Spoonacular meal slot indices mapped to MealType
 _SLOT_TO_MEAL_TYPE: dict[int, MealType] = {
@@ -118,16 +121,33 @@ class MealPlanService:
         time_frame: str = "week",
         target_calories: int = 2000,
         diet: str = "",
+        on_progress: ProgressCallback | None = None,
     ) -> MealPlan:
         """Generate a meal plan and persist it."""
+        total_steps = 3  # fetch, parse, save
+        if on_progress:
+            await on_progress(0, total_steps, "Fetching meal plan from API...")
+
         data = await self._spoonacular_client.generate_meal_plan(
             time_frame=time_frame,
             target_calories=target_calories,
             diet=diet,
         )
 
+        if on_progress:
+            await on_progress(1, total_steps, "Parsing meal plan...")
+
         plan = _parse_spoonacular_plan(data, user_id, name)
-        return await self._meal_plan_repo.create(plan)
+
+        if on_progress:
+            await on_progress(2, total_steps, "Saving meal plan...")
+
+        result = await self._meal_plan_repo.create(plan)
+
+        if on_progress:
+            await on_progress(total_steps, total_steps, "Meal plan complete")
+
+        return result
 
     async def get(self, plan_id: str) -> MealPlan | None:
         """Retrieve a meal plan by ID."""
