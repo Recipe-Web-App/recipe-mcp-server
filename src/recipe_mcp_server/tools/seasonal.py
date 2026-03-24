@@ -96,7 +96,7 @@ async def toggle_seasonal_visibility(ctx: Context) -> None:
     Sends ``ToolListChangedNotification`` when visibility changes.
     """
     if _is_holiday_season():
-        await ctx.enable_components(names=["get_holiday_recipes"])
+        await ctx.enable_components(names={"get_holiday_recipes"})
     else:
-        await ctx.disable_components(names=["get_holiday_recipes"])
+        await ctx.disable_components(names={"get_holiday_recipes"})
     await ctx.send_notification(ToolListChangedNotification())

@@ -52,7 +52,7 @@ async def gather_dietary_preferences(ctx: Context) -> DietaryProfile | None:
     )
 
     await ctx.set_state("user_preferences", profile.model_dump())
-    await ctx.disable_components(names=["gather_dietary_preferences"])
+    await ctx.disable_components(names={"gather_dietary_preferences"})
 
     return profile
 

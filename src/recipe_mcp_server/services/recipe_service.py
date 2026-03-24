@@ -148,14 +148,13 @@ class RecipeService:
         progress can be reported after each one. Otherwise, they are
         called in parallel for speed.
         """
+
+        async def _spoon() -> list[RecipeSummary]:
+            return await self._search_spoonacular(query, cuisine=cuisine, diet=diet, limit=limit)
+
         api_searches: list[tuple[str, Callable[[], Awaitable[list[RecipeSummary]]]]] = [
             ("TheMealDB", lambda: self._search_mealdb(query)),
-            (
-                "Spoonacular",
-                lambda q=query, c=cuisine, d=diet, lim=limit: self._search_spoonacular(
-                    q, cuisine=c, diet=d, limit=lim
-                ),
-            ),
+            ("Spoonacular", _spoon),
             ("DummyJSON", lambda: self._search_dummyjson(query)),
         ]
 
