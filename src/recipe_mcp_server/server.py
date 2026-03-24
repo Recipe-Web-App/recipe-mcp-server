@@ -166,6 +166,7 @@ def create_server() -> FastMCP:
             "nutrition analysis, and meal planning."
         ),
         lifespan=app_lifespan,
+        list_page_size=50,
     )
 
     from recipe_mcp_server.prompts import (

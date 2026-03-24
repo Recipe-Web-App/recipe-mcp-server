@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from typing import cast
 
@@ -16,6 +17,20 @@ from recipe_mcp_server.resources.subscriptions import (
     notify_resource_updated,
 )
 from recipe_mcp_server.services.recipe_service import RecipeService
+
+DEFAULT_SEARCH_PAGE_SIZE = 10
+
+
+def _encode_cursor(offset: int) -> str:
+    """Encode an integer offset into an opaque cursor string."""
+    return base64.urlsafe_b64encode(json.dumps({"o": offset}).encode()).decode()
+
+
+def _decode_cursor(cursor: str) -> int:
+    """Decode an opaque cursor string into an integer offset."""
+    data = json.loads(base64.urlsafe_b64decode(cursor))
+    return int(data["o"])
+
 
 logger = structlog.get_logger(__name__)
 
@@ -37,7 +52,8 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         query: str,
         cuisine: str | None = None,
         diet: str | None = None,
-        limit: int = 10,
+        limit: int = DEFAULT_SEARCH_PAGE_SIZE,
+        cursor: str | None = None,
     ) -> str:
         """Search for recipes across multiple sources.
 
@@ -45,26 +61,40 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             query: Search term (e.g. "chicken curry").
             cuisine: Optional cuisine filter (e.g. "Italian").
             diet: Optional dietary filter (e.g. "vegetarian").
-            limit: Maximum number of results (default 10).
+            limit: Maximum number of results per page (default 10).
+            cursor: Opaque cursor for pagination (from previous results).
         """
+        offset = _decode_cursor(cursor) if cursor else 0
         await ctx.info(
-            f"Searching recipes: query='{query}', cuisine={cuisine}, diet={diet}, limit={limit}"
+            f"Searching recipes: query='{query}', cuisine={cuisine}, "
+            f"diet={diet}, limit={limit}, offset={offset}"
         )
         service = _get_recipe_service(ctx)
         try:
+            # Fetch extra results to support cursor-based paging
+            fetch_limit = offset + limit + 1
             results = await service.search(
                 query,
                 cuisine=cuisine,
                 diet=diet,
-                limit=limit,
+                limit=fetch_limit,
                 on_progress=lambda c, t, m: ctx.report_progress(c, t, m),
             )
-            await ctx.debug(f"Found {len(results)} results for query='{query}'")
+            page = results[offset : offset + limit]
+            has_more = len(results) > offset + limit
+            next_cursor = _encode_cursor(offset + limit) if has_more else None
+
+            await ctx.debug(f"Found {len(page)} results for query='{query}'")
             await ctx.set_state(
                 "last_search",
-                {"query": query, "result_ids": [r.id for r in results]},
+                {"query": query, "result_ids": [r.id for r in page]},
             )
-            return json.dumps([r.model_dump() for r in results], default=str)
+            response: dict[str, object] = {
+                "results": [r.model_dump() for r in page],
+            }
+            if next_cursor:
+                response["next_cursor"] = next_cursor
+            return json.dumps(response, default=str)
         except ExternalAPIError as exc:
             await ctx.error(f"All recipe APIs failed for query='{query}': {exc}")
             return f"Error searching recipes: {exc}"

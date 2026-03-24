@@ -16,8 +16,9 @@ class TestRecipeToolServiceFlow:
         """search_recipes returns results from the mocked TheMealDB API."""
         result = await mcp_client.call_tool("search_recipes", {"query": "teriyaki", "limit": 5})
         text = result.content[0].text
-        recipes = json.loads(text)
-        assert isinstance(recipes, list)
+        data = json.loads(text)
+        assert isinstance(data, dict)
+        recipes = data["results"]
         assert len(recipes) > 0
         assert any("Teriyaki" in r["title"] for r in recipes)
 
