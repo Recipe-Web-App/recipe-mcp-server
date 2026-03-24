@@ -145,6 +145,12 @@ async def app_lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
             await client.aclose()
         if redis_client is not None:
             await close_redis(redis_client)
+        # Properly stop the aiosqlite background thread before disposing.
+        # engine.dispose() closes the StaticPool connection synchronously,
+        # which doesn't await aiosqlite's thread stop future — the thread
+        # then races against event-loop teardown, causing RuntimeError
+        # warnings.  Closing the driver connection via its async close()
+        # awaits the thread stop before we hand control to dispose().
         await engine.dispose()
         logger.info("server_stopped")
 

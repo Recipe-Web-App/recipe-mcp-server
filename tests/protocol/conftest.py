@@ -10,6 +10,9 @@ import pytest
 import pytest_asyncio
 import respx
 from fastmcp import Client, FastMCP
+from sqlalchemy.pool import NullPool
+
+import recipe_mcp_server.db.engine as _engine_mod
 
 
 @pytest.fixture
@@ -24,6 +27,16 @@ def _test_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     from recipe_mcp_server.config import get_settings
 
     get_settings.cache_clear()
+
+    # Force NullPool so aiosqlite background threads don't outlive the
+    # event loop — the standard fix for the "Event loop is closed" race.
+    _original = _engine_mod.create_async_engine
+
+    def _with_null_pool(*args: object, **kwargs: object) -> object:
+        kwargs.setdefault("poolclass", NullPool)
+        return _original(*args, **kwargs)
+
+    monkeypatch.setattr(_engine_mod, "create_async_engine", _with_null_pool)
 
 
 @pytest.fixture
