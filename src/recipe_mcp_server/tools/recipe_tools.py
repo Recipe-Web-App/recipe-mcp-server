@@ -11,6 +11,10 @@ from mcp.types import ToolAnnotations
 
 from recipe_mcp_server.exceptions import ExternalAPIError, NotFoundError
 from recipe_mcp_server.models.recipe import Ingredient, RecipeCreate, RecipeUpdate
+from recipe_mcp_server.resources.subscriptions import (
+    notify_resource_list_changed,
+    notify_resource_updated,
+)
 from recipe_mcp_server.services.recipe_service import RecipeService
 
 logger = structlog.get_logger(__name__)
@@ -159,6 +163,8 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         )
         recipe = await service.create(data)
         await ctx.debug(f"Created recipe with id='{recipe.id}'")
+        await notify_resource_updated(ctx, "recipe://catalog")
+        await notify_resource_list_changed(ctx)
         return recipe.model_dump_json()
 
     @mcp.tool(
@@ -227,6 +233,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         try:
             recipe = await service.update(recipe_id, data)
             await ctx.debug(f"Updated recipe '{recipe_id}'")
+            await notify_resource_updated(ctx, "recipe://catalog")
             return recipe.model_dump_json()
         except NotFoundError as exc:
             await ctx.warning(f"Recipe not found for update: '{recipe_id}'")
@@ -249,6 +256,8 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             await ctx.warning(f"Recipe not found for deletion: '{recipe_id}'")
             return f"Error: Recipe '{recipe_id}' not found"
         await ctx.debug(f"Deleted recipe '{recipe_id}'")
+        await notify_resource_updated(ctx, "recipe://catalog")
+        await notify_resource_list_changed(ctx)
         return json.dumps({"deleted": True, "recipe_id": recipe_id})
 
     @mcp.tool(tags={"recipe", "utility"})
@@ -319,6 +328,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         service = _get_recipe_service(ctx)
         favorite = await service.save_favorite(user_id, recipe_id, rating=rating, notes=notes)
         await ctx.debug(f"Saved favorite for user '{user_id}', recipe '{recipe_id}'")
+        await notify_resource_updated(ctx, f"recipe://favorites/{user_id}")
         return favorite.model_dump_json()
 
     @mcp.tool(
