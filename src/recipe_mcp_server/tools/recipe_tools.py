@@ -13,6 +13,7 @@ from mcp.types import ToolAnnotations
 
 from recipe_mcp_server.exceptions import ExternalAPIError, NotFoundError
 from recipe_mcp_server.models.recipe import Ingredient, RecipeCreate, RecipeUpdate
+from recipe_mcp_server.observability.audit import audited
 from recipe_mcp_server.resources.subscriptions import (
     notify_resource_list_changed,
     notify_resource_updated,
@@ -138,6 +139,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
             return f"Error: {exc}"
 
     @mcp.tool(tags={"recipe"})
+    @audited(action="create", entity_type="recipe")
     async def create_recipe(
         ctx: Context,
         title: str,
@@ -205,6 +207,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(idempotentHint=True),
         tags={"recipe"},
     )
+    @audited(action="update", entity_type="recipe", entity_id_param="recipe_id")
     async def update_recipe(
         ctx: Context,
         recipe_id: str,
@@ -277,6 +280,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(destructiveHint=True),
         tags={"recipe"},
     )
+    @audited(action="delete", entity_type="recipe", entity_id_param="recipe_id")
     async def delete_recipe(ctx: Context, recipe_id: str) -> str:
         """Delete a recipe (soft-delete).
 
@@ -343,6 +347,7 @@ def register_recipe_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(idempotentHint=True),
         tags={"recipe"},
     )
+    @audited(action="create", entity_type="favorite", entity_id_param="recipe_id")
     async def save_favorite(
         ctx: Context,
         user_id: str,
