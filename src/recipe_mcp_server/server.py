@@ -164,6 +164,11 @@ async def app_lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
 def create_server() -> FastMCP:
     """Create and return a configured FastMCP server instance."""
     settings = get_settings()
+
+    from recipe_mcp_server.auth import create_auth_provider
+
+    auth_provider = create_auth_provider(settings)
+
     server = FastMCP(
         name=settings.server_name,
         version=__version__,
@@ -173,7 +178,15 @@ def create_server() -> FastMCP:
         ),
         lifespan=app_lifespan,
         list_page_size=50,
+        auth=auth_provider,
     )
+
+    # Add global auth middleware when OAuth is enabled
+    if auth_provider is not None:
+        from fastmcp.server.auth import require_scopes
+        from fastmcp.server.middleware import AuthMiddleware
+
+        server.add_middleware(AuthMiddleware(auth=require_scopes("recipe:read")))
 
     from recipe_mcp_server.prompts import (
         register_cooking_prompts,
