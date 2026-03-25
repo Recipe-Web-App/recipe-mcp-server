@@ -188,6 +188,12 @@ def create_server() -> FastMCP:
 
         server.add_middleware(AuthMiddleware(auth=require_scopes("recipe:read")))
 
+    # Error handling and rate limiting middleware (always active)
+    from recipe_mcp_server.middleware import ErrorHandlerMiddleware, create_rate_limiter
+
+    server.add_middleware(ErrorHandlerMiddleware())
+    server.add_middleware(create_rate_limiter())
+
     from recipe_mcp_server.prompts import (
         register_cooking_prompts,
         register_dietary_prompts,
