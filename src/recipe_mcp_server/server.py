@@ -28,6 +28,7 @@ from recipe_mcp_server.db.repository import (
 )
 from recipe_mcp_server.db.tables import Base
 from recipe_mcp_server.exceptions import CacheError
+from recipe_mcp_server.observability import configure_logging, init_tracing, shutdown_tracing
 from recipe_mcp_server.services.conversion_service import ConversionService
 from recipe_mcp_server.services.meal_plan_service import MealPlanService
 from recipe_mcp_server.services.nutrition_service import NutritionService
@@ -45,6 +46,10 @@ async def app_lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
     Shutdown order: clients -> Redis -> DB engine.
     """
     settings = get_settings()
+
+    # -- Observability (configure before anything logs) --------------------
+    configure_logging(settings.log_level, settings.log_format)
+    init_tracing(settings.server_name, __version__, settings.otlp_endpoint)
 
     # -- Database ----------------------------------------------------------
     engine = await init_engine(settings)
@@ -152,6 +157,7 @@ async def app_lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
         # warnings.  Closing the driver connection via its async close()
         # awaits the thread stop before we hand control to dispose().
         await engine.dispose()
+        await shutdown_tracing()
         logger.info("server_stopped")
 
 
