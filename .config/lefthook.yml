@@ -105,8 +105,8 @@ pre-push:
       run: uv run --extra dev mypy src/
     lint:
       run: uv run --extra dev ruff check .
-    pip-audit:
-      run: uv run --extra dev pip-audit
+    osv-scan:
+      run: mise exec -- osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock
 
 commit-msg:
   commands:

@@ -1,5 +1,6 @@
 [tools]
 actionlint = "latest"
+"aqua:google/osv-scanner" = "latest"
 "aqua:jessfraz/dockfmt" = "latest"
 docker-cli = "latest"
 docker-compose = "latest"
@@ -66,7 +67,7 @@ run = "uv run ruff format . && uv run ruff check --fix ."
 
 [tasks.security]
 description = "Run security checks"
-run = "uv run pip-audit && uv run bandit -r src/"
+run = "osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock && uv run bandit -r src/"
 
 [tasks.docker-build]
 description = "Build Docker image"
