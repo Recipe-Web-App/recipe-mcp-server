@@ -86,9 +86,19 @@ class ErrorHandlerMiddleware(Middleware):
                     ),
                 )
             ]
-        except CacheError:
-            logger.warning("tool_cache_error_passthrough", exc_info=True)
-            return await call_next(context)
+        except CacheError as exc:
+            logger.warning("tool_cache_error", error=str(exc), exc_info=True)
+            return [
+                mt.TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": "cache_unavailable",
+                            "detail": "Non-critical cache failure; results may be degraded.",
+                        }
+                    ),
+                )
+            ]
         except DatabaseError as exc:
             logger.error("tool_database_error", error=str(exc))
             raise McpError(

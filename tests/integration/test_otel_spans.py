@@ -44,7 +44,11 @@ def span_exporter():
     exporter = _InMemoryExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
-    # Reset the global state so set_tracer_provider works for each test
+    # The OTel SDK does not expose a public reset API for the global
+    # TracerProvider.  The opentelemetry.test.globals helper does not
+    # exist in our SDK version, so we reset private attributes directly.
+    # If the OTel SDK changes these internals, the fixture will fail
+    # loudly rather than silently.
     trace._TRACER_PROVIDER = None  # type: ignore[attr-defined]
     trace._TRACER_PROVIDER_SET_ONCE._done = False  # type: ignore[attr-defined]
     trace.set_tracer_provider(provider)
@@ -120,13 +124,14 @@ class TestOTelSpans:
     async def test_no_spans_without_provider(self) -> None:
         """When no TracerProvider is configured, spans are no-ops."""
         original = trace.get_tracer_provider()
-        trace.set_tracer_provider(trace.NoOpTracerProvider())
+        try:
+            trace.set_tracer_provider(trace.NoOpTracerProvider())
 
-        @traced()
-        async def noop_call() -> str:
-            return "no spans"
+            @traced()
+            async def noop_call() -> str:
+                return "no spans"
 
-        result = await noop_call()
-        assert result == "no spans"
-
-        trace.set_tracer_provider(original)
+            result = await noop_call()
+            assert result == "no spans"
+        finally:
+            trace.set_tracer_provider(original)

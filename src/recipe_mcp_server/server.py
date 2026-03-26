@@ -165,6 +165,11 @@ def create_server() -> FastMCP:
     """Create and return a configured FastMCP server instance."""
     settings = get_settings()
 
+    # Configure logging early so auth provider logs are structured
+    from recipe_mcp_server.observability import configure_logging
+
+    configure_logging(settings.log_level, settings.log_format)
+
     from recipe_mcp_server.auth import create_auth_provider
 
     auth_provider = create_auth_provider(settings)
@@ -181,12 +186,16 @@ def create_server() -> FastMCP:
         auth=auth_provider,
     )
 
-    # Add global auth middleware when OAuth is enabled
+    # Add auth middleware when OAuth is enabled: recipe:read globally,
+    # recipe:write enforced for mutating tools via WriteScopeMiddleware
     if auth_provider is not None:
         from fastmcp.server.auth import require_scopes
         from fastmcp.server.middleware import AuthMiddleware
 
+        from recipe_mcp_server.middleware.write_scope import WriteScopeMiddleware
+
         server.add_middleware(AuthMiddleware(auth=require_scopes("recipe:read")))
+        server.add_middleware(WriteScopeMiddleware())
 
     # Error handling and rate limiting middleware (always active)
     from recipe_mcp_server.middleware import ErrorHandlerMiddleware, create_rate_limiter

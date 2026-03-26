@@ -1,6 +1,7 @@
-"""Input sanitization validators for tool parameters.
+"""Input sanitization utilities for tool parameters.
 
-Validation functions are called at tool entry points.  Any failure raises
+These are helper functions that tool implementations can call to validate
+and sanitize user-supplied arguments.  Any failure raises
 :class:`~recipe_mcp_server.exceptions.ValidationError`, which the
 :class:`~recipe_mcp_server.middleware.error_handler.ErrorHandlerMiddleware`
 maps to an ``InvalidParams`` MCP error.

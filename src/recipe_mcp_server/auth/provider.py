@@ -30,6 +30,13 @@ def create_auth_provider(settings: Settings) -> AuthProvider | None:
         logger.debug("auth_disabled", reason="oauth_issuer not configured")
         return None
 
+    if not settings.oauth_jwks_url:
+        logger.warning(
+            "auth_disabled",
+            reason="oauth_issuer is set but oauth_jwks_url is empty",
+        )
+        return None
+
     from fastmcp.server.auth import JWTVerifier, RemoteAuthProvider
     from pydantic import AnyHttpUrl
 

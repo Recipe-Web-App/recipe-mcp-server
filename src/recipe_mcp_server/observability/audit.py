@@ -1,14 +1,15 @@
 """Audit trail decorator for MCP tools.
 
-The :func:`audited` decorator logs before/after state to the ``audit_log``
-table via :class:`~recipe_mcp_server.db.repository.AuditRepo`.  It is
-designed to be applied to tool handler functions that receive a
+The :func:`audited` decorator logs tool results (after-state) to the
+``audit_log`` table via :class:`~recipe_mcp_server.db.repository.AuditRepo`.
+It is designed to be applied to tool handler functions that receive a
 :class:`fastmcp.Context` as their first positional argument.
 """
 
 from __future__ import annotations
 
 import functools
+import inspect
 import json
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
@@ -16,7 +17,6 @@ from typing import Any, TypeVar
 import structlog
 from fastmcp import Context
 
-from recipe_mcp_server.db.repository import AuditRepo
 from recipe_mcp_server.observability.logging import request_id_ctx
 
 logger = structlog.get_logger(__name__)
@@ -44,7 +44,7 @@ def _parse_result_state(result: Any) -> dict[str, Any] | None:
             if isinstance(parsed, dict):
                 return parsed
         except (json.JSONDecodeError, TypeError):
-            pass
+            logger.debug("audit_parse_result_not_json", result_type=type(result).__name__)
     return None
 
 
@@ -59,32 +59,41 @@ def audited(
         action: Action name (``"create"``, ``"update"``, ``"delete"``).
         entity_type: Entity being mutated (``"recipe"``, ``"meal_plan"``).
         entity_id_param: Name of the kwarg holding the entity ID.  Used to
-            fetch ``before_state`` for update/delete operations.
+            identify the entity for update/delete operations.
     """
 
     def decorator(func: F) -> F:
+        # Pre-compute positional index for entity_id_param (once at decoration time)
+        _entity_id_positional_idx: int | None = None
+        if entity_id_param is not None:
+            sig = inspect.signature(func)
+            params = list(sig.parameters.keys())
+            if entity_id_param in params:
+                _entity_id_positional_idx = params.index(entity_id_param)
+
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             ctx = _extract_context(args, kwargs)
             if ctx is None:
                 return await func(*args, **kwargs)
 
-            audit_repo: AuditRepo = ctx.lifespan_context["audit_repo"]
+            audit_repo = ctx.lifespan_context.get("audit_repo")
+            if audit_repo is None:
+                logger.warning("audit_repo_not_available", tool=func.__name__)
+                return await func(*args, **kwargs)
 
-            # Determine entity ID from kwargs
+            # Determine entity ID from kwargs or positional args
             entity_id: str | None = None
             if entity_id_param is not None:
-                entity_id = kwargs.get(entity_id_param)
-                if entity_id is None and len(args) > 1:
-                    # Positional fallback: ctx is args[0], entity_id is often args[1]
-                    import inspect
-
-                    sig = inspect.signature(func)
-                    params = list(sig.parameters.keys())
-                    if entity_id_param in params:
-                        idx = params.index(entity_id_param)
-                        if idx < len(args):
-                            entity_id = str(args[idx])
+                raw_id = kwargs.get(entity_id_param)
+                if (
+                    raw_id is None
+                    and _entity_id_positional_idx is not None
+                    and _entity_id_positional_idx < len(args)
+                ):
+                    raw_id = args[_entity_id_positional_idx]
+                if raw_id is not None:
+                    entity_id = str(raw_id)
 
             # Execute the actual tool
             result = await func(*args, **kwargs)
@@ -94,7 +103,9 @@ def audited(
 
             # Extract entity_id from result for create operations
             if entity_id is None and after_state is not None:
-                entity_id = after_state.get("id")
+                raw_id = after_state.get("id")
+                if raw_id is not None:
+                    entity_id = str(raw_id)
 
             # Write audit log (fire-and-forget — never fail the tool)
             try:
