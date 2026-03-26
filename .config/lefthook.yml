@@ -106,7 +106,7 @@ pre-push:
     lint:
       run: uv run --extra dev ruff check .
     osv-scan:
-      run: osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock
+      run: mise exec -- osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock
 
 commit-msg:
   commands:
