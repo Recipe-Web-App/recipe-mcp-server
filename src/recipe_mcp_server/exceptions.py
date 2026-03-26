@@ -59,3 +59,19 @@ class ServiceUnavailableError(ExternalAPIError):
 
 class AuthenticationError(ExternalAPIError):
     """API key invalid or expired."""
+
+
+class ValidationError(RecipeMCPError):
+    """Invalid input parameters (caught by Pydantic or manual validation)."""
+
+
+class DuplicateError(RecipeMCPError):
+    """Attempted to create a duplicate resource."""
+
+
+class DatabaseError(RecipeMCPError):
+    """Unrecoverable database operation failure."""
+
+
+class AuthorizationError(RecipeMCPError):
+    """Caller lacks permission for the requested operation (OAuth/scope failure)."""

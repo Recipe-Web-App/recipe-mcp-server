@@ -11,6 +11,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.server.tasks.config import TaskConfig
 
 from recipe_mcp_server.exceptions import ExternalAPIError, NotFoundError
+from recipe_mcp_server.observability.audit import audited
 from recipe_mcp_server.services.meal_plan_service import MealPlanService
 from recipe_mcp_server.services.shopping_service import ShoppingService
 
@@ -31,6 +32,7 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
     """Register all meal plan tools on the given FastMCP server."""
 
     @mcp.tool(tags={"planning"}, task=TaskConfig(mode="optional"))
+    @audited(action="create", entity_type="meal_plan")
     async def generate_meal_plan(
         ctx: Context,
         user_id: str,
