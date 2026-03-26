@@ -36,8 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
-      - run: uv sync --frozen --extra dev
-      - run: uv run pip-audit
+      - run: osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock
 
   test:
     name: Test

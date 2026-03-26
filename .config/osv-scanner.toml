@@ -1,0 +1,10 @@
+# osv-scanner.toml — Vulnerability scanning configuration
+# https://google.github.io/osv-scanner/configuration/
+
+# Temporarily ignored vulnerabilities
+# Uncomment and adapt when you need to suppress a known-unfixable vuln:
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-yyyy-zzzz"
+# ignoreUntil = "2026-04-01"
+# reason = "No fix available; tracked in #42"

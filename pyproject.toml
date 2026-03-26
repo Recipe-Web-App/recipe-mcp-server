@@ -32,7 +32,6 @@ dev = [
   "polyfactory>=3.3",
   "ruff>=0.15",
   "mypy>=1.19",
-  "pip-audit>=2.10",
   "bandit>=1.9",
   "locust>=2.43",
 ]
