@@ -28,7 +28,10 @@ def _extract_context(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Context |
     """Return the :class:`Context` from the call arguments, if present."""
     if args and isinstance(args[0], Context):
         return args[0]
-    return kwargs.get("ctx")  # type: ignore[return-value]
+    ctx = kwargs.get("ctx")
+    if isinstance(ctx, Context):
+        return ctx
+    return None
 
 
 def _parse_result_state(result: Any) -> dict[str, Any] | None:

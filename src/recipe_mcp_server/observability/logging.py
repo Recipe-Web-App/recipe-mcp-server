@@ -8,6 +8,7 @@ entry when set, enabling cross-cutting request correlation.
 from __future__ import annotations
 
 import logging
+from collections.abc import MutableMapping
 from contextvars import ContextVar
 from typing import Any, Literal
 
@@ -19,8 +20,8 @@ request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 def _add_request_id(
     _logger: Any,
     _method: str,
-    event_dict: dict[str, Any],
-) -> dict[str, Any]:
+    event_dict: MutableMapping[str, Any],
+) -> MutableMapping[str, Any]:
     """Inject the current request ID into the log event, if available."""
     rid = request_id_ctx.get()
     if rid is not None:
