@@ -246,6 +246,14 @@ def create_server() -> FastMCP:
 
     server.mount(nutrition_mcp, namespace="nutrition")
 
+    # Health endpoint for Docker healthcheck and load balancer probes
+    from starlette.requests import Request
+    from starlette.responses import JSONResponse
+
+    @server.custom_route("/health", methods=["GET"])
+    async def health_check(request: Request) -> JSONResponse:
+        return JSONResponse({"status": "ok"})
+
     return server
 
 
