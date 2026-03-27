@@ -11,12 +11,14 @@ COPY pyproject.toml uv.lock ./
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application source and migration files
 COPY src/ src/
 COPY alembic.ini ./
 COPY migrations/ migrations/
+
+RUN uv sync --frozen --no-dev
 
 # Stage 2: Runtime
 FROM python:3.13-slim

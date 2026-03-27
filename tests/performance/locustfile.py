@@ -20,6 +20,7 @@ Web UI:
 
 from __future__ import annotations
 
+import json
 import uuid
 
 from locust import HttpUser, between, events, tag, task
@@ -130,6 +131,14 @@ class MCPUser(HttpUser):
         ) as resp:
             if resp.status_code != 200:
                 resp.failure(f"{tool_name} failed: {resp.status_code}")
+                return
+            try:
+                body = resp.json()
+            except ValueError:
+                resp.failure(f"{tool_name}: invalid JSON response")
+                return
+            if "error" in body:
+                resp.failure(f"{tool_name} JSON-RPC error: {body['error']}")
             else:
                 resp.success()
 
@@ -203,7 +212,10 @@ class MealPlanUser(MCPUser):
         self._call_tool(
             "generate_meal_plan",
             {
-                "days": 3,
+                "user_id": "locust-user",
+                "name": "load-test-plan",
+                "time_frame": "day",
+                "target_calories": 2000,
                 "diet": "balanced",
             },
         )
@@ -214,6 +226,6 @@ class MealPlanUser(MCPUser):
         self._call_tool(
             "generate_shopping_list",
             {
-                "recipe_ids": SEED_RECIPE_IDS[:3],
+                "recipe_ids_json": json.dumps(SEED_RECIPE_IDS[:3]),
             },
         )

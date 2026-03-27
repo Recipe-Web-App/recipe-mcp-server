@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +40,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
+      - run: uv sync --frozen --extra dev
       - run: osv-scanner scan --config .config/osv-scanner.toml --lockfile uv.lock
+      - run: uv run bandit -r src/
 
   test-unit:
     name: Unit Tests
