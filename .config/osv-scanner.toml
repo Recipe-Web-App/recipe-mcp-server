@@ -13,8 +13,3 @@
 id = "GHSA-5239-wwwm-4pmq"
 ignoreUntil = "2026-04-01T00:00:00Z"
 reason = "pygments low-severity (3.3 CVSS), no fix available yet"
-
-[[IgnoredVulns]]
-id = "GHSA-gc5v-m9x4-r6x2"
-ignoreUntil = "2026-04-01T00:00:00Z"
-reason = "requests medium-severity (4.4 CVSS), fix in 2.33.0 — upgrade pending"

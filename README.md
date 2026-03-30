@@ -48,6 +48,45 @@ cp .env.example .env
 mise run dev
 ```
 
+## Docker
+
+```bash
+# Start the full stack (server + Redis + Jaeger)
+mise run docker-up
+
+# View Jaeger tracing UI
+open http://localhost:16686
+
+# Stop all services
+mise run docker-down
+```
+
+## Architecture
+
+```text
+Client (Claude Desktop / AI Agent)
+    │
+    ▼
+┌─────────────────────────────────────┐
+│  FastMCP Server (tools/resources/   │
+│  prompts/sampling/elicitation)      │
+├─────────────────────────────────────┤
+│  Middleware (auth, rate limit,      │
+│  error handling, validators)        │
+├─────────────────────────────────────┤
+│  Services (recipe, nutrition,       │
+│  meal plan, shopping, conversion)   │
+├──────────────┬──────────────────────┤
+│  API Clients │  DB Repositories     │
+│  (MealDB,    │  (SQLAlchemy 2.0     │
+│   USDA,      │   + aiosqlite)       │
+│   Spoon...)  │                      │
+├──────────────┴──────────────────────┤
+│  Observability (OTel + structlog)   │
+│  Cache (Redis)                      │
+└─────────────────────────────────────┘
+```
+
 ## Project Structure
 
 ```text
@@ -87,23 +126,26 @@ recipe-mcp-server/
 
 All tasks are run via `mise run <task>`:
 
-| Task               | Description                              |
-| ------------------ | ---------------------------------------- |
-| `dev`              | Run server locally (stdio mode)          |
-| `dev-http`         | Run server locally (HTTP mode)           |
-| `test`             | Run all tests                            |
-| `test-unit`        | Run unit tests only                      |
-| `test-integration` | Run integration tests (needs Redis)      |
-| `test-e2e`         | Run end-to-end MCP protocol tests        |
-| `test-coverage`    | Run tests with coverage report (85% min) |
-| `lint`             | Run all linters (ruff + mypy)            |
-| `fmt`              | Auto-format code                         |
-| `security`         | Run security checks (pip-audit + bandit) |
-| `db-migrate`       | Run Alembic migrations                   |
-| `db-seed`          | Seed database with sample data           |
-| `inspect`          | Launch MCP Inspector                     |
-| `check`            | Run all checks (lint + test + security)  |
-| `clean`            | Remove build artifacts and caches        |
+| Task               | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `dev`              | Run server locally (stdio mode)              |
+| `dev-http`         | Run server locally (HTTP mode)               |
+| `test`             | Run all tests                                |
+| `test-unit`        | Run unit tests only                          |
+| `test-integration` | Run integration tests (needs Redis)          |
+| `test-e2e`         | Run end-to-end MCP protocol tests            |
+| `test-coverage`    | Run tests with coverage report (85% min)     |
+| `lint`             | Run all linters (ruff + mypy)                |
+| `fmt`              | Auto-format code                             |
+| `security`         | Run security checks (osv-scanner + bandit)   |
+| `docker-build`     | Build Docker image                           |
+| `docker-up`        | Start all services (server + Redis + Jaeger) |
+| `docker-down`      | Stop all services                            |
+| `db-migrate`       | Run Alembic migrations                       |
+| `db-seed`          | Seed database with sample data               |
+| `inspect`          | Launch MCP Inspector                         |
+| `check`            | Run all checks (lint + test + security)      |
+| `clean`            | Remove build artifacts and caches            |
 
 ## Contributing
 

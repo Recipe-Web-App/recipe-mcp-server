@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Server
     server_name: str = "recipe-mcp-server"
     transport: Literal["stdio", "http"] = "stdio"
-    host: str = "0.0.0.0"
+    host: str = "127.0.0.1"
     port: int = 8000
 
     # Database
