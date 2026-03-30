@@ -113,7 +113,8 @@ def register_meal_plan_tools(mcp: FastMCP) -> None:
                 await ctx.warning(f"Meal plan not found: '{meal_plan_id}'")
                 return f"Error: {exc}"
 
-        assert recipe_ids_json is not None  # guaranteed by guard above
+        if recipe_ids_json is None:
+            return "Error: Provide at least one of recipe_ids_json or meal_plan_id"
         try:
             recipe_ids: list[str] = json.loads(recipe_ids_json)
         except (json.JSONDecodeError, TypeError) as exc:
